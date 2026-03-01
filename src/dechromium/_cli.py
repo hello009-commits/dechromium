@@ -252,13 +252,15 @@ def _destroy(args: list[str]):
 
     # 2. Uninstall pip package (must be last — we're running from it)
     print("  Uninstalling dechromium package...")
-    result = subprocess.run(
+    uninstall_cmds = [
         [sys.executable, "-m", "pip", "uninstall", "dechromium", "-y"],
-        capture_output=True,
-    )
-    if result.returncode != 0:
-        # Fallback: pip may not be installed as module in this env
-        subprocess.run(["pip", "uninstall", "dechromium", "-y"], check=False)
+        ["pip", "uninstall", "dechromium", "-y"],
+        ["uv", "pip", "uninstall", "dechromium"],
+    ]
+    for cmd in uninstall_cmds:
+        result = subprocess.run(cmd, capture_output=True)
+        if result.returncode == 0:
+            break
     print()
     print("dechromium has been completely removed.")
 

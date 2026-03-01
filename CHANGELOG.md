@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.4
+
+### Fixed
+
+- `dechromium destroy` — added `uv pip uninstall` fallback for uv-managed environments
+
 ## 0.6.3
 
 ### Added
