@@ -4,7 +4,7 @@ from __future__ import annotations
 def test_import():
     from dechromium import Dechromium, __version__
 
-    assert __version__ == "0.4.0"
+    assert __version__ == "0.5.0"
     assert Dechromium is not None
 
 
