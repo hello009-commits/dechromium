@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.0
+
+Auto-geolocation from proxy IP and `navigator.geolocation` spoofing.
+
+### Added
+
+- GeoIP module (`_geoip.py`): DB-IP City Lite MMDB download and lookup
+- Country → locale/languages mapping (`data/country_locales.json`, 250 countries)
+- Auto-detection: `create()` fills timezone/locale/languages/geolocation from proxy IP when not explicitly provided
+- `latitude` and `longitude` fields on `Network` model
+- `--aspect-geo-latitude` / `--aspect-geo-longitude` launch arguments
+- `dechromium download-geoip` CLI command
+- `maxminddb>=2.0` dependency
+
+### Chromium patches
+
+- `011-geolocation-spoofing`: intercepts `CreateGeoposition()` in blink to override coordinates from command-line switches
+
 ## 0.4.0
 
 Bundled fonts and context-manager-first documentation.
