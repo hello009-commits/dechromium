@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.6.0
+
+Profile versioning and upgrade system.
+
+### Added
+
+- `library_version` field on `Profile` — stamps the library version that created it
+- `dechromium check` CLI command — shows which profiles are outdated
+- `dechromium upgrade-profiles` CLI command — re-runs auto-detection on outdated profiles
+- `Dechromium.check_profiles()` and `Dechromium.upgrade_profiles()` API methods
+- `GET /check` and `POST /upgrade-profiles` server endpoints
+- `_refresh_profile()` — generic refresh function for applying new auto-detection logic to existing profiles
+
+### Changed
+
+- `ProfileManager.create()` now stamps `library_version` with current `__version__`
+- `_apply_overrides()` handles `library_version` field
+
 ## 0.5.0
 
 Auto-geolocation from proxy IP and `navigator.geolocation` spoofing.

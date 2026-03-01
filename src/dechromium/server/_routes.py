@@ -122,6 +122,15 @@ def create_app(dc: Dechromium) -> FastAPI:
         dc.stop_all()
         return {"stopped": True}
 
+    @app.get("/check")
+    def check_profiles():
+        return dc.check_profiles()
+
+    @app.post("/upgrade-profiles")
+    def upgrade_profiles():
+        upgraded = dc.upgrade_profiles(progress=False)
+        return {"upgraded": upgraded, "count": len(upgraded)}
+
     @app.get("/health")
     def health():
         return {

@@ -130,6 +130,7 @@ All models are Pydantic v2 `BaseModel` subclasses with validation.
 | `created_at` | `int` | auto (unix timestamp) | Creation time |
 | `updated_at` | `int` | auto (unix timestamp) | Last update time |
 | `notes` | `str` | `""` | User notes |
+| `library_version` | `str` | `"0.0.0"` | Library version that created/upgraded this profile |
 | `identity` | `Identity` | defaults | Navigator identity |
 | `hardware` | `Hardware` | defaults | Hardware specs |
 | `webgl` | `WebGL` | defaults | WebGL configuration |

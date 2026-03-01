@@ -303,6 +303,56 @@ class Dechromium:
         """Remove an installed Chromium version."""
         return self._browsers.uninstall(version)
 
+    def check_profiles(self) -> list[dict]:
+        """Check which profiles were created with an older library version.
+
+        Returns list of dicts with profile info and whether it needs upgrading.
+        """
+        from dechromium import __version__
+
+        results = []
+        for profile in self._manager.list_all():
+            outdated = profile.library_version != __version__
+            results.append(
+                {
+                    "id": profile.id,
+                    "name": profile.name,
+                    "library_version": profile.library_version,
+                    "current_version": __version__,
+                    "outdated": outdated,
+                }
+            )
+        return results
+
+    def upgrade_profiles(self, *, progress: bool = True) -> list[str]:
+        """Upgrade outdated profiles with latest auto-detection logic.
+
+        Re-runs auto-geo for profiles with a proxy, stamps current library_version.
+
+        Returns list of upgraded profile IDs.
+        """
+        from dechromium import __version__
+
+        upgraded = []
+        for profile in self._manager.list_all():
+            if profile.library_version == __version__:
+                continue
+
+            changes = _refresh_profile(profile, self.config.data_dir)
+            profile.library_version = __version__
+            overrides: dict = {}
+            if changes:
+                overrides["network"] = changes
+            overrides["library_version"] = __version__
+            self._manager.update(profile.id, **overrides)
+
+            if progress:
+                detail = f" (updated: {', '.join(changes)})" if changes else ""
+                print(f"  Upgraded {profile.name} ({profile.id}){detail}")
+            upgraded.append(profile.id)
+
+        return upgraded
+
     def serve(self, host: str | None = None, port: int | None = None):
         try:
             from dechromium.server import create_app
@@ -457,3 +507,57 @@ def _apply_auto_geo(overrides: dict, proxy: str, data_dir: Path) -> None:
 
     net.setdefault("latitude", geo.latitude)
     net.setdefault("longitude", geo.longitude)
+
+
+# -- Network defaults used to detect "user never set this" ------------------
+_NET_DEFAULTS = {
+    "timezone": "America/New_York",
+    "locale": "en-US",
+    "languages": ["en-US", "en"],
+}
+
+
+def _refresh_profile(profile: Profile, data_dir: Path) -> dict:
+    """Re-run auto-detection logic on an existing profile.
+
+    Returns a dict of network field changes to apply (empty if nothing to do).
+    This function is generic — future auto-detection features should be added here.
+    """
+    import logging
+
+    from dechromium._geoip import lookup, resolve_proxy_ip
+
+    logger = logging.getLogger(__name__)
+    changes: dict = {}
+    net = profile.network
+
+    # -- Auto-geo from proxy (added in 0.5.0) ------------------------------
+    if net.proxy:
+        try:
+            ip = resolve_proxy_ip(net.proxy)
+            geo = lookup(ip, data_dir)
+        except Exception:
+            logger.debug("refresh: geo lookup failed for %s", net.proxy, exc_info=True)
+            geo = None
+
+        if geo:
+            # Fill None fields unconditionally
+            if net.latitude is None and geo.latitude is not None:
+                changes["latitude"] = geo.latitude
+            if net.longitude is None and geo.longitude is not None:
+                changes["longitude"] = geo.longitude
+
+            # Replace default-valued fields (user never explicitly set them)
+            if net.timezone == _NET_DEFAULTS["timezone"] and geo.timezone:
+                changes["timezone"] = geo.timezone
+            if net.locale == _NET_DEFAULTS["locale"]:
+                country_map = _load_country_locales()
+                info = country_map.get(geo.country_code)
+                if info:
+                    changes["locale"] = info["locale"]
+                    if net.languages == _NET_DEFAULTS["languages"]:
+                        changes["languages"] = info["languages"]
+
+    # -- Future auto-detection features go here ----------------------------
+
+    return changes

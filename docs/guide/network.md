@@ -112,3 +112,33 @@ For anti-detect to work, network settings must be consistent:
 - Languages should include the locale's language
 
 Auto-detection handles all of this automatically when you just provide a proxy.
+
+## Upgrading existing profiles
+
+Profiles created with an older library version may be missing newer auto-detection features (e.g., geolocation from proxy). Each profile stores the `library_version` it was created with.
+
+Check which profiles need upgrading:
+```bash
+dechromium check
+```
+
+Upgrade all outdated profiles:
+```bash
+dechromium upgrade-profiles
+```
+
+This re-runs all auto-detection logic on existing profiles:
+
+- Profiles with a proxy get geolocation, timezone, locale, and languages filled in (if still at defaults)
+- Fields explicitly set by the user are never overwritten
+- The profile's `library_version` is stamped with the current version
+
+Via Python:
+```python
+# Check
+for info in dc.check_profiles():
+    print(info["name"], "outdated" if info["outdated"] else "ok")
+
+# Upgrade
+upgraded = dc.upgrade_profiles()
+```

@@ -27,7 +27,9 @@ class ProfileManager:
         self.config.profiles_dir.mkdir(parents=True, exist_ok=True)
 
     def create(self, name: str = "default", **overrides) -> Profile:
-        profile = Profile(name=name)
+        from dechromium import __version__
+
+        profile = Profile(name=name, library_version=__version__)
         _apply_overrides(profile, overrides)
 
         profile_dir = self._profile_dir(profile.id)
@@ -111,6 +113,6 @@ def _apply_overrides(profile: Profile, overrides: dict):
             current["user_agent"] = ""
         setattr(profile, section_name, model_cls(**current))
 
-    for field in ("name", "notes"):
+    for field in ("name", "notes", "library_version"):
         if field in overrides:
             setattr(profile, field, overrides[field])

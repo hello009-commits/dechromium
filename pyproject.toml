@@ -1,6 +1,6 @@
 [project]
 name = "dechromium"
-version = "0.5.0"
+version = "0.6.0"
 description = "Anti-detect browser built on Chromium"
 authors = [{ name = "ENbanned" }]
 license = "MIT"

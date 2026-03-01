@@ -27,6 +27,7 @@ class Profile(BaseModel):
     created_at: int = Field(default_factory=_ts)
     updated_at: int = Field(default_factory=_ts)
     notes: str = ""
+    library_version: str = "0.0.0"
     identity: Identity = Field(default_factory=Identity)
     hardware: Hardware = Field(default_factory=Hardware)
     webgl: WebGL = Field(default_factory=WebGL)

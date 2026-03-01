@@ -23,6 +23,10 @@ def main():
         _serve(args[1:])
     elif cmd == "download-geoip":
         _download_geoip(args[1:])
+    elif cmd == "check":
+        _check(args[1:])
+    elif cmd == "upgrade-profiles":
+        _upgrade_profiles(args[1:])
     elif cmd == "version":
         from dechromium import __version__
 
@@ -150,6 +154,63 @@ def _download_geoip(args: list[str]):
     print("Done.")
 
 
+def _check(args: list[str]):
+    if args and args[0] == "--help":
+        print("Usage: dechromium check")
+        print()
+        print("Check which profiles need upgrading.")
+        print("Profiles created with an older library version may be missing")
+        print("features like auto-geolocation from proxy IP.")
+        return
+
+    from dechromium import Dechromium
+
+    dc = Dechromium()
+    results = dc.check_profiles()
+
+    if not results:
+        print("No profiles found.")
+        return
+
+    outdated = [r for r in results if r["outdated"]]
+
+    print()
+    print(f"  {'NAME':<20} {'ID':<14} {'VERSION':<12} STATUS")
+    for r in results:
+        status = "outdated" if r["outdated"] else "up to date"
+        print(f"  {r['name']:<20} {r['id']:<14} {r['library_version']:<12} {status}")
+    print()
+    if outdated:
+        print(f"  {len(outdated)} profile(s) can be upgraded.")
+        print("  Run: dechromium upgrade-profiles")
+    else:
+        print("  All profiles are up to date.")
+
+
+def _upgrade_profiles(args: list[str]):
+    if args and args[0] == "--help":
+        print("Usage: dechromium upgrade-profiles")
+        print()
+        print("Upgrade outdated profiles with latest auto-detection logic.")
+        print("Re-runs geo-detection for profiles with a proxy, fills missing fields,")
+        print("and stamps the current library version.")
+        return
+
+    from dechromium import Dechromium
+
+    dc = Dechromium()
+    results = dc.check_profiles()
+    outdated = [r for r in results if r["outdated"]]
+
+    if not outdated:
+        print("All profiles are up to date.")
+        return
+
+    print(f"Upgrading {len(outdated)} profile(s)...")
+    upgraded = dc.upgrade_profiles(progress=True)
+    print(f"\nDone. {len(upgraded)} profile(s) upgraded.")
+
+
 def _serve(args: list[str]):
     host = "127.0.0.1"
     port = 3789
@@ -179,6 +240,10 @@ def _usage():
     print("  update                               Check for browser updates")
     print("  browsers                             List available/installed browsers")
     print("  uninstall VERSION                    Remove installed browser")
+    print()
+    print("Profiles:")
+    print("  check                                Check profiles for available upgrades")
+    print("  upgrade-profiles                     Upgrade outdated profiles")
     print()
     print("Data:")
     print("  download-geoip                       Download/update GeoIP database")
