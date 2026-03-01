@@ -2,9 +2,11 @@ from __future__ import annotations
 
 
 def test_import():
+    from importlib.metadata import version
+
     from dechromium import Dechromium, __version__
 
-    assert __version__ == "0.5.0"
+    assert __version__ == version("dechromium")
     assert Dechromium is not None
 
 
