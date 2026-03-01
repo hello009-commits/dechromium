@@ -97,6 +97,10 @@ def build_launch_args(profile: Profile, config: Config) -> list[str]:
             f"{wgl.shader_precision_medium[2]}"
         )
 
+    if net.latitude is not None and net.longitude is not None:
+        args.append(f"--aspect-geo-latitude={net.latitude}")
+        args.append(f"--aspect-geo-longitude={net.longitude}")
+
     return args
 
 

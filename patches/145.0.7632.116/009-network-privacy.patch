@@ -1,7 +1,7 @@
 From d33d97cf73ba9c5625ef04c544becc597b2d7c88 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:19:52 +0000
-Subject: [PATCH 09/10] 009-network-privacy
+Subject: [PATCH 09/11] 009-network-privacy
 
 SOCKS5 proxy authentication and HTTP proxy auto-login:
 - SOCKS5: username/password auth (RFC 1929) via --aspect-proxy-username/password

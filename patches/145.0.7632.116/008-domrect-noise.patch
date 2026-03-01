@@ -1,7 +1,7 @@
 From 75097e5d8be5289b036668117e1b2a3f723d0fe5 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:19:45 +0000
-Subject: [PATCH 08/10] 008-domrect-noise
+Subject: [PATCH 08/11] 008-domrect-noise
 
 DOMRect fingerprint noise via --aspect-domrect-noise-seed:
 - Element: getClientRects() and getBoundingClientRect()

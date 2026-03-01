@@ -12,6 +12,8 @@ from dechromium.browser._cookies import export_cookies, import_cookies
 from dechromium.models import Platform, Profile
 from dechromium.profile import DiversityEngine, ProfileManager
 
+_COUNTRY_LOCALES: dict | None = None
+
 _NAV_PLATFORM = {
     Platform.WINDOWS: "Win32",
     Platform.MACOS: "MacIntel",
@@ -88,6 +90,8 @@ class Dechromium:
         timezone: str | None = None,
         locale: str | None = None,
         languages: list[str] | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
         cores: int | None = None,
         memory: float | None = None,
         screen: tuple[int, int] | None = None,
@@ -132,6 +136,8 @@ class Dechromium:
                 timezone=timezone,
                 locale=locale,
                 languages=languages,
+                latitude=latitude,
+                longitude=longitude,
                 webgl_vendor=webgl_vendor,
                 webgl_renderer=webgl_renderer,
                 identity=identity,
@@ -142,6 +148,10 @@ class Dechromium:
                 fonts=fonts,
                 notes=notes,
             )
+
+            # Auto-detect geo from proxy when timezone/locale not explicit
+            if proxy and not timezone and not locale:
+                _apply_auto_geo(overrides, proxy, self.config.data_dir)
 
             # Merge: generated is base, user overrides on top
             for section in ("identity", "hardware", "webgl", "noise", "fonts"):
@@ -156,6 +166,8 @@ class Dechromium:
                 timezone=timezone,
                 locale=locale,
                 languages=languages,
+                latitude=latitude,
+                longitude=longitude,
                 cores=cores,
                 memory=memory,
                 screen=screen,
@@ -169,6 +181,11 @@ class Dechromium:
                 fonts=fonts,
                 notes=notes,
             )
+
+            # Auto-detect geo from proxy when timezone/locale not explicit
+            if proxy and not timezone and not locale:
+                _apply_auto_geo(overrides, proxy, self.config.data_dir)
+
         return self._manager.create(name, **overrides)
 
     def get(self, profile_id: str) -> Profile:
@@ -320,6 +337,8 @@ def _build_overrides(
     timezone: str | None = None,
     locale: str | None = None,
     languages: list[str] | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
     cores: int | None = None,
     memory: float | None = None,
     screen: tuple[int, int] | None = None,
@@ -371,6 +390,10 @@ def _build_overrides(
         result.setdefault("network", {})["locale"] = locale
     if languages:
         result.setdefault("network", {})["languages"] = languages
+    if latitude is not None:
+        result.setdefault("network", {})["latitude"] = latitude
+    if longitude is not None:
+        result.setdefault("network", {})["longitude"] = longitude
 
     if cores is not None:
         result.setdefault("hardware", {})["cores"] = cores
@@ -392,3 +415,45 @@ def _build_overrides(
         result["notes"] = notes
 
     return result
+
+
+def _load_country_locales() -> dict:
+    global _COUNTRY_LOCALES
+    if _COUNTRY_LOCALES is None:
+        import json
+
+        data_file = Path(__file__).parent / "data" / "country_locales.json"
+        _COUNTRY_LOCALES = json.loads(data_file.read_text())
+    return _COUNTRY_LOCALES
+
+
+def _apply_auto_geo(overrides: dict, proxy: str, data_dir: Path) -> None:
+    """Auto-fill timezone/locale/languages/geolocation from proxy IP."""
+    import logging
+
+    from dechromium._geoip import lookup, resolve_proxy_ip
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        ip = resolve_proxy_ip(proxy)
+        geo = lookup(ip, data_dir)
+    except Exception:
+        logger.debug("Auto-geo failed for proxy %s", proxy, exc_info=True)
+        return
+
+    if not geo:
+        return
+
+    net = overrides.setdefault("network", {})
+    if geo.timezone:
+        net.setdefault("timezone", geo.timezone)
+
+    country_map = _load_country_locales()
+    info = country_map.get(geo.country_code)
+    if info:
+        net.setdefault("locale", info["locale"])
+        net.setdefault("languages", info["languages"])
+
+    net.setdefault("latitude", geo.latitude)
+    net.setdefault("longitude", geo.longitude)

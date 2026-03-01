@@ -10,6 +10,8 @@ class CreateRequest(BaseModel):
     timezone: str | None = None
     locale: str | None = None
     languages: list[str] | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     identity: dict | None = None
     hardware: dict | None = None
     webgl: dict | None = None

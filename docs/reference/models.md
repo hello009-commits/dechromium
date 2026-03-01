@@ -112,6 +112,8 @@ All models are Pydantic v2 `BaseModel` subclasses with validation.
 | `timezone` | `str` | `"America/New_York"` | IANA timezone |
 | `locale` | `str` | `"en-US"` | BCP 47 locale tag |
 | `languages` | `list[str]` | `["en-US", "en"]` | Accept-Language / navigator.languages |
+| `latitude` | `float \| None` | `None` | Geolocation spoof latitude (-90 to 90) |
+| `longitude` | `float \| None` | `None` | Geolocation spoof longitude (-180 to 180) |
 
 ### Fonts
 

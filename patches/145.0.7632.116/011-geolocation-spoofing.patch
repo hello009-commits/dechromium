@@ -1,0 +1,106 @@
+From 3b2356bf5e7e42e2218064ca4a307b18a96f6d79 Mon Sep 17 00:00:00 2001
+From: ENbanned <nik.skvortsov2007@gmail.com>
+Date: Sun, 1 Mar 2026 13:52:58 +0000
+Subject: [PATCH 11/11] 011-geolocation-spoofing
+
+---
+ .../renderer_host/render_process_host_impl.cc |  2 ++
+ third_party/blink/common/switches.cc          |  2 ++
+ third_party/blink/public/common/switches.h    |  3 ++
+ .../renderer/core/geolocation/geolocation.cc  | 29 +++++++++++++++++--
+ 4 files changed, 34 insertions(+), 2 deletions(-)
+
+diff --git a/content/browser/renderer_host/render_process_host_impl.cc b/content/browser/renderer_host/render_process_host_impl.cc
+index efb15041389f1..43c83b8929e85 100644
+--- a/content/browser/renderer_host/render_process_host_impl.cc
++++ b/content/browser/renderer_host/render_process_host_impl.cc
+@@ -3813,6 +3813,8 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
+       blink::switches::kAspectWebglPrecisionMedium,
+       blink::switches::kAspectAudioNoiseSeed,
+       blink::switches::kAspectDomrectNoiseSeed,
++      blink::switches::kAspectGeoLatitude,
++      blink::switches::kAspectGeoLongitude,
+       // Please keep these in alphabetical order. Compositor switches here
+       // should also be added to
+       // chrome/browser/ash/login/chrome_restart_request.cc.
+diff --git a/third_party/blink/common/switches.cc b/third_party/blink/common/switches.cc
+index 002b2d95fac1d..cf9d935097e99 100644
+--- a/third_party/blink/common/switches.cc
++++ b/third_party/blink/common/switches.cc
+@@ -182,6 +182,8 @@ const char kAspectWebglPrecisionHigh[] = "aspect-webgl-precision-high";
+ const char kAspectWebglPrecisionMedium[] = "aspect-webgl-precision-medium";
+ const char kAspectAudioNoiseSeed[] = "aspect-audio-noise-seed";
+ const char kAspectDomrectNoiseSeed[] = "aspect-domrect-noise-seed";
++const char kAspectGeoLatitude[] = "aspect-geo-latitude";
++const char kAspectGeoLongitude[] = "aspect-geo-longitude";
+ 
+ }  // namespace switches
+ }  // namespace blink
+diff --git a/third_party/blink/public/common/switches.h b/third_party/blink/public/common/switches.h
+index a68a51bbeb4ff..bbafc573658ce 100644
+--- a/third_party/blink/public/common/switches.h
++++ b/third_party/blink/public/common/switches.h
+@@ -82,6 +82,9 @@ BLINK_COMMON_EXPORT extern const char kAspectWebglPrecisionHigh[];
+ BLINK_COMMON_EXPORT extern const char kAspectWebglPrecisionMedium[];
+ BLINK_COMMON_EXPORT extern const char kAspectAudioNoiseSeed[];
+ BLINK_COMMON_EXPORT extern const char kAspectDomrectNoiseSeed[];
++// Geolocation:
++BLINK_COMMON_EXPORT extern const char kAspectGeoLatitude[];
++BLINK_COMMON_EXPORT extern const char kAspectGeoLongitude[];
+ // Proxy auth: uses raw strings "aspect-proxy-username" / "aspect-proxy-password"
+ // in net/ layer (which must not depend on blink/).
+ }  // namespace switches
+diff --git a/third_party/blink/renderer/core/geolocation/geolocation.cc b/third_party/blink/renderer/core/geolocation/geolocation.cc
+index 640ee17dcfecd..4e968c79c3f18 100644
+--- a/third_party/blink/renderer/core/geolocation/geolocation.cc
++++ b/third_party/blink/renderer/core/geolocation/geolocation.cc
+@@ -51,6 +51,9 @@
+ #include "third_party/blink/renderer/core/timing/epoch_time_stamp.h"
+ #include "third_party/blink/renderer/platform/bindings/source_location.h"
+ #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
++#include "base/command_line.h"
++#include "base/strings/string_number_conversions.h"
++#include "third_party/blink/public/common/switches.h"
+ 
+ namespace blink {
+ namespace {
+@@ -65,12 +68,34 @@ const char kFeaturePolicyConsoleWarning[] =
+ 
+ Geoposition* CreateGeoposition(
+     const device::mojom::blink::Geoposition& position) {
++  double latitude = position.latitude;
++  double longitude = position.longitude;
++  double accuracy = position.accuracy;
++
++  const auto& cmd = *base::CommandLine::ForCurrentProcess();
++  if (cmd.HasSwitch(blink::switches::kAspectGeoLatitude) &&
++      cmd.HasSwitch(blink::switches::kAspectGeoLongitude)) {
++    double lat_val, lng_val;
++    if (base::StringToDouble(
++            cmd.GetSwitchValueASCII(blink::switches::kAspectGeoLatitude),
++            &lat_val) &&
++        base::StringToDouble(
++            cmd.GetSwitchValueASCII(blink::switches::kAspectGeoLongitude),
++            &lng_val) &&
++        lat_val >= -90.0 && lat_val <= 90.0 &&
++        lng_val >= -180.0 && lng_val <= 180.0) {
++      latitude = lat_val;
++      longitude = lng_val;
++      accuracy = 100.0;
++    }
++  }
++
+   auto* coordinates = MakeGarbageCollected<GeolocationCoordinates>(
+-      position.latitude, position.longitude,
++      latitude, longitude,
+       // Lowest point on land is at approximately -400 meters.
+       position.altitude > -10000. ? std::make_optional(position.altitude)
+                                   : std::nullopt,
+-      position.accuracy,
++      accuracy,
+       position.altitude_accuracy >= 0.
+           ? std::make_optional(position.altitude_accuracy)
+           : std::nullopt,
+-- 
+2.39.5
+

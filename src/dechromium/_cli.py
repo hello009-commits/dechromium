@@ -21,6 +21,8 @@ def main():
         _uninstall(args[1:])
     elif cmd == "serve":
         _serve(args[1:])
+    elif cmd == "download-geoip":
+        _download_geoip(args[1:])
     elif cmd == "version":
         from dechromium import __version__
 
@@ -132,6 +134,22 @@ def _uninstall(args: list[str]):
         sys.exit(1)
 
 
+def _download_geoip(args: list[str]):
+    if args and args[0] == "--help":
+        print("Usage: dechromium download-geoip")
+        print()
+        print("Download or update the GeoIP database (DB-IP City Lite).")
+        print("Used for auto-detecting timezone/locale from proxy IP.")
+        return
+
+    from dechromium._config import _default_data_dir
+    from dechromium._geoip import download
+
+    data_dir = _default_data_dir()
+    download(data_dir, progress=True)
+    print("Done.")
+
+
 def _serve(args: list[str]):
     host = "127.0.0.1"
     port = 3789
@@ -161,6 +179,9 @@ def _usage():
     print("  update                               Check for browser updates")
     print("  browsers                             List available/installed browsers")
     print("  uninstall VERSION                    Remove installed browser")
+    print()
+    print("Data:")
+    print("  download-geoip                       Download/update GeoIP database")
     print()
     print("Server:")
     print("  serve [--host=HOST] [--port=PORT]    Start REST API server")

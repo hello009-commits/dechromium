@@ -1,7 +1,7 @@
 From 313001e41dfef02824655ffd02e8ad4f1c8d0881 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:19:31 +0000
-Subject: [PATCH 06/10] 006-webgl-fingerprint
+Subject: [PATCH 06/11] 006-webgl-fingerprint
 
 Expanded WebGL fingerprint spoofing:
 - getParameter: 22 hardware params via --aspect-webgl-params (key=value CSV)

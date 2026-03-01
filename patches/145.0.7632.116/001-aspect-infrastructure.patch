@@ -1,7 +1,7 @@
 From 309523c786a99b8d3839bfaac88fc3407efa25c9 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:00:13 +0000
-Subject: [PATCH 01/10] 001-aspect-infrastructure
+Subject: [PATCH 01/11] 001-aspect-infrastructure
 
 All shared infrastructure for Aspect browser fingerprinting:
 - 21 blink::switches declarations + definitions

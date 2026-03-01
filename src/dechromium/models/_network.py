@@ -13,3 +13,5 @@ class Network(BaseModel):
     timezone: str = "America/New_York"
     locale: str = "en-US"
     languages: list[str] = Field(default_factory=lambda: ["en-US", "en"])
+    latitude: float | None = None
+    longitude: float | None = None

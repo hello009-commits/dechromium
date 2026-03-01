@@ -18,6 +18,7 @@ Patches are stored in `patches/{chromium_version}/` as git format-patch files. E
 | 008 | `audio-fingerprint` | Noise in AudioBuffer.getChannelData(), copyFromChannel(), and all AnalyserNode getter methods |
 | 009 | `network-privacy` | SOCKS5 RFC 1929 auth in C++, HTTP proxy auto-auth, DNS-over-HTTPS control, switch propagation to network utility process |
 | 010 | `font-control` | Per-profile fontconfig via `FONTCONFIG_FILE`, blocks fontconfig substitution — if the requested font isn't installed, returns null instead of a substitute |
+| 011 | `geolocation-spoofing` | Overrides `navigator.geolocation` coordinates via `--aspect-geo-latitude` / `--aspect-geo-longitude` switches, intercepted at `CreateGeoposition()` in blink |
 
 ## What's NOT patched (and why)
 

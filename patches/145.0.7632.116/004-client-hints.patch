@@ -1,7 +1,7 @@
 From 121b0ed4697ae59733bf9d4ee53c390142f00d22 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:01:53 +0000
-Subject: [PATCH 04/10] 004-client-hints
+Subject: [PATCH 04/11] 004-client-hints
 
 Client Hints (Sec-CH-UA) spoofing via user_agent_utils.cc:
 - Override platform, platformVersion, architecture in UA metadata

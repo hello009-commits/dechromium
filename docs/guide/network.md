@@ -60,6 +60,49 @@ dc.create("x", locale="ja-JP", languages=["ja-JP", "ja", "en-US", "en"])
 - `locale` → `--lang` flag + `LANG` env var → affects `Intl.*` APIs
 - `languages` → `--accept-lang` flag → `navigator.languages` and `Accept-Language` header
 
+## Geolocation
+
+Spoof `navigator.geolocation` (both `getCurrentPosition` and `watchPosition`):
+```python
+dc.create("x", latitude=35.6762, longitude=139.6503)
+```
+
+When set, the browser receives `--aspect-geo-latitude` / `--aspect-geo-longitude` switches. The Chromium patch overrides the coordinates at the C++ level — no CDP hack, no permission prompt bypass needed (the user still grants permission normally, but receives spoofed coordinates).
+
+If `latitude` and `longitude` are `None` (default), the geolocation API is not spoofed.
+
+## Auto-detection
+
+When you provide a proxy but **don't** set timezone, locale, or languages explicitly, dechromium automatically resolves the proxy IP and fills in matching values:
+
+```python
+# Proxy in Tokyo → timezone=Asia/Tokyo, locale=ja-JP, languages=["ja-JP","ja","en"],
+#                   latitude=35.69, longitude=139.69
+dc.create("x", proxy="socks5://tokyo-proxy:1080")
+```
+
+Auto-detection uses a local [DB-IP](https://db-ip.com/) City Lite database (MMDB format). The database is downloaded automatically on first use and cached in `~/.dechromium/data/geoip/`.
+
+To manually download or update the database:
+```bash
+dechromium download-geoip
+```
+
+You can override any auto-detected value:
+```python
+# Use proxy geo for timezone/locale, but set custom coordinates
+dc.create("x", proxy="socks5://tokyo-proxy:1080", latitude=35.6762, longitude=139.6503)
+
+# Use proxy for geo, but force a specific timezone
+dc.create("x", proxy="socks5://tokyo-proxy:1080", timezone="Asia/Osaka")
+```
+
+Auto-detection triggers only when **both** `timezone` and `locale` are not explicitly provided. Setting either one disables auto-detection entirely.
+
+!!! note "DB-IP attribution"
+    This product includes GeoLite2 Data created by DB-IP, available from
+    [https://db-ip.com](https://db-ip.com). The database is updated monthly.
+
 ## Consistency
 
 For anti-detect to work, network settings must be consistent:
@@ -67,3 +110,5 @@ For anti-detect to work, network settings must be consistent:
 - Proxy IP geolocation should match the timezone
 - Timezone should match the locale (a Japanese locale with a US timezone is suspicious)
 - Languages should include the locale's language
+
+Auto-detection handles all of this automatically when you just provide a proxy.

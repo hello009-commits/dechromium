@@ -1,7 +1,7 @@
 From 0460cfc0e7f4bab638eb8e4b7c6c0a33ae9b47b1 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:03:11 +0000
-Subject: [PATCH 05/10] 005-canvas-fingerprint
+Subject: [PATCH 05/11] 005-canvas-fingerprint
 
 Canvas fingerprint noise via --aspect-canvas-noise-seed:
 - getImageData path: base_rendering_context_2d.cc
