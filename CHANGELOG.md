@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.2
+
+### Fixed
+
+- `dechromium destroy` — fallback to `pip` CLI when `python -m pip` is unavailable (e.g. some venvs)
+- Added `destroy` documentation to browser management guide
+
 ## 0.6.1
 
 ### Added

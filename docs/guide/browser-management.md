@@ -97,6 +97,24 @@ Each GitHub Release has an `updated_at` timestamp per asset. When you run `dechr
 2. Compare the remote `updated_at` with the locally stored value in `.manifest.json`
 3. If the remote is newer (patch was re-built and re-uploaded), re-download
 
+### Destroy
+
+Completely remove dechromium — all data and the pip package:
+
+```bash
+dechromium destroy
+```
+
+This deletes:
+
+- `~/.dechromium/` — all profiles, browsers, fonts, GeoIP data
+- The `dechromium` pip package itself
+
+Requires confirmation. Use `--yes` to skip the prompt:
+```bash
+dechromium destroy --yes
+```
+
 ## SHA-256 verification
 
 If a `manifest.json` asset is present in the GitHub Release, the installer:
