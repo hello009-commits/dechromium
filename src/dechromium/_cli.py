@@ -254,13 +254,10 @@ def _destroy(args: list[str]):
     print("  Uninstalling dechromium package...")
     uninstall_cmds = [
         [sys.executable, "-m", "pip", "uninstall", "dechromium", "-y"],
-        ["pip", "uninstall", "dechromium", "-y"],
         ["uv", "pip", "uninstall", "dechromium"],
     ]
     for cmd in uninstall_cmds:
-        result = subprocess.run(cmd, capture_output=True)
-        if result.returncode == 0:
-            break
+        subprocess.run(cmd, capture_output=True)
     print()
     print("dechromium has been completely removed.")
 
