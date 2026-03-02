@@ -1,4 +1,4 @@
-From 9daecb75ed69d8f2e149161539aee08a95c69653 Mon Sep 17 00:00:00 2001
+From 8fbddad88985f56b12944be2fe47fe9127bb19b9 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:19:31 +0000
 Subject: [PATCH 06/13] 006-webgl-fingerprint
@@ -11,8 +11,8 @@ Expanded WebGL fingerprint spoofing:
   --aspect-webgl-precision-high/medium (rangeMin,rangeMax,precision)
 ---
  .../webgl/webgl2_rendering_context_base.cc    |  21 +-
- .../webgl/webgl_rendering_context_base.cc     | 201 ++++++++++++++++++
- 2 files changed, 221 insertions(+), 1 deletion(-)
+ .../webgl/webgl_rendering_context_base.cc     | 198 +++++++++++++++++-
+ 2 files changed, 217 insertions(+), 2 deletions(-)
 
 diff --git a/third_party/blink/renderer/modules/webgl/webgl2_rendering_context_base.cc b/third_party/blink/renderer/modules/webgl/webgl2_rendering_context_base.cc
 index 132e1b3724f9d..80ef719c24d41 100644
@@ -69,7 +69,7 @@ index 132e1b3724f9d..80ef719c24d41 100644
      case GL_COPY_READ_BUFFER_BINDING:
        return WebGLAny(script_state, bound_copy_read_buffer_.Get());
 diff --git a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc b/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
-index 72a80ba576711..12befc7d50b5c 100644
+index 72a80ba576711..0c135dc8bc55a 100644
 --- a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
 +++ b/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
 @@ -26,6 +26,7 @@
@@ -80,7 +80,7 @@ index 72a80ba576711..12befc7d50b5c 100644
  #include <utility>
  
  #include "base/bit_cast.h"
-@@ -110,6 +111,12 @@
+@@ -110,6 +111,11 @@
  #include "third_party/blink/renderer/modules/webgl/webgl_context_attribute_helpers.h"
  #include "third_party/blink/renderer/modules/webgl/webgl_context_event.h"
  #include "third_party/blink/renderer/modules/webgl/webgl_debug_renderer_info.h"
@@ -89,11 +89,10 @@ index 72a80ba576711..12befc7d50b5c 100644
 +#include "base/strings/string_number_conversions.h"
 +#include "base/strings/string_split.h"
 +#include "third_party/blink/public/common/switches.h"
-+#include "third_party/blink/renderer/platform/graphics/aspect_canvas_noise.h"
  #include "third_party/blink/renderer/modules/webgl/webgl_debug_shaders.h"
  #include "third_party/blink/renderer/modules/webgl/webgl_depth_texture.h"
  #include "third_party/blink/renderer/modules/webgl/webgl_draw_buffers.h"
-@@ -188,6 +195,33 @@ unsigned WebGLRenderingContextBase::max_active_webgl_contexts_on_worker_ = 0;
+@@ -188,6 +194,33 @@ unsigned WebGLRenderingContextBase::max_active_webgl_contexts_on_worker_ = 0;
  
  namespace {
  
@@ -127,7 +126,19 @@ index 72a80ba576711..12befc7d50b5c 100644
  enum class WebGLANGLEImplementation {
    // These values are persisted to logs. Entries should not be renumbered and
    // numeric values should never be reused.
-@@ -3650,6 +3684,25 @@ bool WebGLRenderingContextBase::TimerQueryExtensionsEnabled() {
+@@ -3569,7 +3602,10 @@ WebGLContextAttributes* WebGLRenderingContextBase::getContextAttributes()
+     result->setDepth(false);
+   if (CreationAttributes().stencil && !GetDrawingBuffer()->HasStencilBuffer())
+     result->setStencil(false);
+-  result->setAntialias(GetDrawingBuffer()->Multisample());
++  // Aspect: report antialias as requested, not actual DrawingBuffer state.
++  // SwiftShader may not support MSAA, but the creation attribute is what
++  // a real GPU browser would report.
++  result->setAntialias(CreationAttributes().antialias);
+   result->setXrCompatible(xr_compatible_);
+   result->setDesynchronized(Host()->LowLatencyEnabled());
+   return result;
+@@ -3650,6 +3686,25 @@ bool WebGLRenderingContextBase::TimerQueryExtensionsEnabled() {
  
  ScriptObject WebGLRenderingContextBase::getExtension(ScriptState* script_state,
                                                       const String& name) {
@@ -153,7 +164,7 @@ index 72a80ba576711..12befc7d50b5c 100644
    ExecutionContext* context = ExecutionContext::From(script_state);
  
    if (name == WebGLDebugRendererInfo::ExtensionName()) {
-@@ -3767,6 +3820,31 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
+@@ -3767,6 +3822,31 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
                                                      GLenum pname) {
    if (isContextLost())
      return ScriptValue::CreateNull(script_state->GetIsolate());
@@ -185,7 +196,7 @@ index 72a80ba576711..12befc7d50b5c 100644
    const int kIntZero = 0;
    switch (pname) {
      case GL_ACTIVE_TEXTURE:
-@@ -3976,6 +4054,12 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
+@@ -3976,6 +4056,12 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
        return ScriptValue::CreateNull(script_state->GetIsolate());
      case WebGLDebugRendererInfo::kUnmaskedRendererWebgl:
        if (ExtensionEnabled(kWebGLDebugRendererInfoName)) {
@@ -198,7 +209,7 @@ index 72a80ba576711..12befc7d50b5c 100644
          return WebGLAny(script_state,
                          String(ContextGL()->GetString(GL_RENDERER)));
        }
-@@ -3985,6 +4069,12 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
+@@ -3985,6 +4071,12 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
        return ScriptValue::CreateNull(script_state->GetIsolate());
      case WebGLDebugRendererInfo::kUnmaskedVendorWebgl:
        if (ExtensionEnabled(kWebGLDebugRendererInfoName)) {
@@ -211,7 +222,7 @@ index 72a80ba576711..12befc7d50b5c 100644
          return WebGLAny(script_state,
                          String(ContextGL()->GetString(GL_VENDOR)));
        }
-@@ -4286,6 +4376,35 @@ WebGLShaderPrecisionFormat* WebGLRenderingContextBase::getShaderPrecisionFormat(
+@@ -4286,6 +4378,35 @@ WebGLShaderPrecisionFormat* WebGLRenderingContextBase::getShaderPrecisionFormat(
    GLint precision = 0;
    ContextGL()->GetShaderPrecisionFormat(shader_type, precision_type, range,
                                          &precision);
@@ -247,7 +258,7 @@ index 72a80ba576711..12befc7d50b5c 100644
    return MakeGarbageCollected<WebGLShaderPrecisionFormat>(range[0], range[1],
                                                            precision);
  }
-@@ -4309,6 +4428,32 @@ WebGLRenderingContextBase::getSupportedExtensions() {
+@@ -4309,6 +4430,32 @@ WebGLRenderingContextBase::getSupportedExtensions() {
      }
    }
  
@@ -280,22 +291,15 @@ index 72a80ba576711..12befc7d50b5c 100644
    return result;
  }
  
-@@ -5129,6 +5274,14 @@ void WebGLRenderingContextBase::ReadPixelsHelper(GLint x,
+@@ -5129,6 +5276,7 @@ void WebGLRenderingContextBase::ReadPixelsHelper(GLint x,
      }
      ContextGL()->ReadPixels(x, y, width, height, format, type, data);
    }
 +
-+  // Aspect: apply canvas noise to WebGL readPixels output.
-+  if (format == GL_RGBA && type == GL_UNSIGNED_BYTE && width > 0 &&
-+      height > 0) {
-+    uint64_t seed = GetCanvasNoiseSeed();
-+    if (seed != 0)
-+      ApplyCanvasNoiseRGBA(seed, data, width, height);
-+  }
  }
  
  void WebGLRenderingContextBase::RenderbufferStorageImpl(
-@@ -7670,6 +7823,15 @@ ScriptValue WebGLRenderingContextBase::GetFloatParameter(
+@@ -7670,6 +7818,15 @@ ScriptValue WebGLRenderingContextBase::GetFloatParameter(
  ScriptValue WebGLRenderingContextBase::GetIntParameter(
      ScriptState* script_state,
      GLenum pname) {
@@ -311,7 +315,7 @@ index 72a80ba576711..12befc7d50b5c 100644
    GLint value = 0;
    if (!isContextLost()) {
      ContextGL()->GetIntegerv(pname, &value);
-@@ -7692,6 +7854,15 @@ ScriptValue WebGLRenderingContextBase::GetIntParameter(
+@@ -7692,6 +7849,15 @@ ScriptValue WebGLRenderingContextBase::GetIntParameter(
  ScriptValue WebGLRenderingContextBase::GetInt64Parameter(
      ScriptState* script_state,
      GLenum pname) {
@@ -327,7 +331,7 @@ index 72a80ba576711..12befc7d50b5c 100644
    GLint64 value = 0;
    if (!isContextLost())
      ContextGL()->GetInteger64v(pname, &value);
-@@ -7710,6 +7881,21 @@ ScriptValue WebGLRenderingContextBase::GetUnsignedIntParameter(
+@@ -7710,6 +7876,21 @@ ScriptValue WebGLRenderingContextBase::GetUnsignedIntParameter(
  ScriptValue WebGLRenderingContextBase::GetWebGLFloatArrayParameter(
      ScriptState* script_state,
      GLenum pname) {
@@ -349,7 +353,7 @@ index 72a80ba576711..12befc7d50b5c 100644
    std::array<GLfloat, 4> value = {0};
    if (!isContextLost())
      ContextGL()->GetFloatv(pname, value.data());
-@@ -7734,6 +7920,21 @@ ScriptValue WebGLRenderingContextBase::GetWebGLFloatArrayParameter(
+@@ -7734,6 +7915,21 @@ ScriptValue WebGLRenderingContextBase::GetWebGLFloatArrayParameter(
  ScriptValue WebGLRenderingContextBase::GetWebGLIntArrayParameter(
      ScriptState* script_state,
      GLenum pname) {

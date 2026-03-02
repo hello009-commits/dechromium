@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.1
+
+### Changed
+
+- Canvas fingerprint: replaced post-readback noise with rendering-level sub-pixel translate on SkCanvas; all readback APIs (getImageData, toDataURL, toBlob) now return identical unmodified pixels
+- WebGL: fix `getContextAttributes().antialias` leaking real DrawingBuffer MSAA state (SwiftShader returns false, spoofed GPU should return true)
+- Added `GL_SUBPIXEL_BITS` (0x0D50) to gpu_profiles.json for all backends
+
+### Chromium patches
+
+- Fixup 005: remove all ApplyCanvasNoise readback code; add sub-pixel translate in GetOrCreatePaintCanvas for both CanvasRenderingContext2D and OffscreenCanvasRenderingContext2D
+- Fixup 006: spoof getContextAttributes().antialias to match creation attributes
+
 ## 0.9.0
 
 Fingerprint audit v2 — fix timezone, WebGL, and canvas detections from BrowserScan.
