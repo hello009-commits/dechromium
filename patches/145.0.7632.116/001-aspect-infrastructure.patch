@@ -1,7 +1,7 @@
-From 8786549ce39cf8affb52127f23b7eead617bb585 Mon Sep 17 00:00:00 2001
+From ea034a44a349e96f2ab14a38174909b878bb0a1e Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:00:13 +0000
-Subject: [PATCH 01/12] 001-aspect-infrastructure
+Subject: [PATCH 01/13] 001-aspect-infrastructure
 
 All shared infrastructure for Aspect browser fingerprinting:
 - 21 blink::switches declarations + definitions
@@ -13,10 +13,10 @@ All shared infrastructure for Aspect browser fingerprinting:
  .gitignore                                    |  1 +
  .../browser/chrome_content_browser_client.cc  |  6 ++++
  chrome/browser/ui/startup/infobar_utils.cc    |  6 ++--
- .../renderer_host/render_process_host_impl.cc | 22 +++++++++++++
- third_party/blink/common/switches.cc          | 26 +++++++++++++++
- third_party/blink/public/common/switches.h    | 33 +++++++++++++++++++
- 6 files changed, 92 insertions(+), 2 deletions(-)
+ .../renderer_host/render_process_host_impl.cc | 23 ++++++++++++
+ third_party/blink/common/switches.cc          | 27 ++++++++++++++
+ third_party/blink/public/common/switches.h    | 35 +++++++++++++++++++
+ 6 files changed, 96 insertions(+), 2 deletions(-)
 
 diff --git a/.gitignore b/.gitignore
 index 4c61af331b827..e8733ff4d609b 100644
@@ -68,10 +68,10 @@ index 04e26dadc8348..4663628d0b2db 100644
    }
  
 diff --git a/content/browser/renderer_host/render_process_host_impl.cc b/content/browser/renderer_host/render_process_host_impl.cc
-index 2ad7efb8632ca..74d1940830d84 100644
+index 2ad7efb8632ca..d02700fd87223 100644
 --- a/content/browser/renderer_host/render_process_host_impl.cc
 +++ b/content/browser/renderer_host/render_process_host_impl.cc
-@@ -3794,6 +3794,28 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
+@@ -3794,6 +3794,29 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
        blink::switches::kShowPaintRects,
        blink::switches::kTouchTextSelectionStrategy,
        blink::switches::kJavaScriptFlags,
@@ -97,14 +97,15 @@ index 2ad7efb8632ca..74d1940830d84 100644
 +      blink::switches::kAspectFontFamilies,
 +      blink::switches::kAspectWebglVersion,
 +      blink::switches::kAspectWebglGlslVersion,
++      blink::switches::kAspectTimezone,
        // Please keep these in alphabetical order. Compositor switches here
        // should also be added to
        // chrome/browser/ash/login/chrome_restart_request.cc.
 diff --git a/third_party/blink/common/switches.cc b/third_party/blink/common/switches.cc
-index da8e6ff391773..5b2ec1adc8d4d 100644
+index da8e6ff391773..fa30c565877da 100644
 --- a/third_party/blink/common/switches.cc
 +++ b/third_party/blink/common/switches.cc
-@@ -160,5 +160,31 @@ const char kWebAudioBypassOutputBufferingOptOut[] =
+@@ -160,5 +160,32 @@ const char kWebAudioBypassOutputBufferingOptOut[] =
  // controlled by base features, but requires an enterprise policy override.
  const char kDisableReduceAcceptLanguage[] = "disable-reduce-accept-language";
  
@@ -133,14 +134,15 @@ index da8e6ff391773..5b2ec1adc8d4d 100644
 +const char kAspectFontFamilies[] = "aspect-font-families";
 +const char kAspectWebglVersion[] = "aspect-webgl-version";
 +const char kAspectWebglGlslVersion[] = "aspect-webgl-glsl-version";
++const char kAspectTimezone[] = "aspect-timezone";
 +
  }  // namespace switches
  }  // namespace blink
 diff --git a/third_party/blink/public/common/switches.h b/third_party/blink/public/common/switches.h
-index 115125f5a170b..03435b0541314 100644
+index 115125f5a170b..4195d809c1b41 100644
 --- a/third_party/blink/public/common/switches.h
 +++ b/third_party/blink/public/common/switches.h
-@@ -56,6 +56,39 @@ BLINK_COMMON_EXPORT extern const char kTouchTextSelectionStrategy_Direction[];
+@@ -56,6 +56,41 @@ BLINK_COMMON_EXPORT extern const char kTouchTextSelectionStrategy_Direction[];
  BLINK_COMMON_EXPORT extern const char kDisableStandardizedBrowserZoom[];
  BLINK_COMMON_EXPORT extern const char kWebAudioBypassOutputBufferingOptOut[];
  BLINK_COMMON_EXPORT extern const char kDisableReduceAcceptLanguage[];
@@ -175,6 +177,8 @@ index 115125f5a170b..03435b0541314 100644
 +// WebGL version strings:
 +BLINK_COMMON_EXPORT extern const char kAspectWebglVersion[];
 +BLINK_COMMON_EXPORT extern const char kAspectWebglGlslVersion[];
++// Timezone:
++BLINK_COMMON_EXPORT extern const char kAspectTimezone[];
 +// Proxy auth: uses raw strings "aspect-proxy-username" / "aspect-proxy-password"
 +// in net/ layer (which must not depend on blink/).
  }  // namespace switches

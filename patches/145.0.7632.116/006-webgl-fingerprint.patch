@@ -1,7 +1,7 @@
-From 4925bd0090ee512bf7d32e1c3ceaf4753daaf5d6 Mon Sep 17 00:00:00 2001
+From 9daecb75ed69d8f2e149161539aee08a95c69653 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:19:31 +0000
-Subject: [PATCH 06/12] 006-webgl-fingerprint
+Subject: [PATCH 06/13] 006-webgl-fingerprint
 
 Expanded WebGL fingerprint spoofing:
 - getParameter: 22 hardware params via --aspect-webgl-params (key=value CSV)
@@ -10,12 +10,12 @@ Expanded WebGL fingerprint spoofing:
 - getShaderPrecisionFormat: override HIGH/MEDIUM precision via
   --aspect-webgl-precision-high/medium (rangeMin,rangeMax,precision)
 ---
- .../webgl/webgl2_rendering_context_base.cc    |  13 +-
- .../webgl/webgl_rendering_context_base.cc     | 204 ++++++++++++++++++
- 2 files changed, 216 insertions(+), 1 deletion(-)
+ .../webgl/webgl2_rendering_context_base.cc    |  21 +-
+ .../webgl/webgl_rendering_context_base.cc     | 201 ++++++++++++++++++
+ 2 files changed, 221 insertions(+), 1 deletion(-)
 
 diff --git a/third_party/blink/renderer/modules/webgl/webgl2_rendering_context_base.cc b/third_party/blink/renderer/modules/webgl/webgl2_rendering_context_base.cc
-index 132e1b3724f9d..3920cc830296a 100644
+index 132e1b3724f9d..80ef719c24d41 100644
 --- a/third_party/blink/renderer/modules/webgl/webgl2_rendering_context_base.cc
 +++ b/third_party/blink/renderer/modules/webgl/webgl2_rendering_context_base.cc
 @@ -6,11 +6,13 @@
@@ -32,14 +32,18 @@ index 132e1b3724f9d..3920cc830296a 100644
  #include "third_party/blink/public/platform/web_graphics_context_3d_provider.h"
  #include "third_party/blink/renderer/bindings/modules/v8/webgl_any.h"
  #include "third_party/blink/renderer/core/dom/document.h"
-@@ -4776,17 +4778,26 @@ ScriptValue WebGL2RenderingContextBase::getParameter(ScriptState* script_state,
+@@ -4776,17 +4778,34 @@ ScriptValue WebGL2RenderingContextBase::getParameter(ScriptState* script_state,
      return ScriptValue::CreateNull(script_state->GetIsolate());
    switch (pname) {
      case GL_SHADING_LANGUAGE_VERSION: {
++      // Aspect: construct correct WebGL2 GLSL prefix with inner driver portion.
 +      const auto& cmd = *base::CommandLine::ForCurrentProcess();
-+      if (cmd.HasSwitch(blink::switches::kAspectWebglGlslVersion))
-+        return WebGLAny(script_state, String(cmd.GetSwitchValueASCII(
-+            blink::switches::kAspectWebglGlslVersion)));
++      if (cmd.HasSwitch(blink::switches::kAspectWebglGlslVersion)) {
++        std::string inner =
++            cmd.GetSwitchValueASCII(blink::switches::kAspectWebglGlslVersion);
++        return WebGLAny(script_state,
++                        String("WebGL GLSL ES 3.00 (" + inner + ")"));
++      }
        return WebGLAny(
            script_state,
            StrCat({"WebGL GLSL ES 3.00 (",
@@ -48,10 +52,14 @@ index 132e1b3724f9d..3920cc830296a 100644
      }
 -    case GL_VERSION:
 +    case GL_VERSION: {
++      // Aspect: construct correct WebGL2 version prefix with inner driver portion.
 +      const auto& cmd = *base::CommandLine::ForCurrentProcess();
-+      if (cmd.HasSwitch(blink::switches::kAspectWebglVersion))
-+        return WebGLAny(script_state, String(cmd.GetSwitchValueASCII(
-+            blink::switches::kAspectWebglVersion)));
++      if (cmd.HasSwitch(blink::switches::kAspectWebglVersion)) {
++        std::string inner =
++            cmd.GetSwitchValueASCII(blink::switches::kAspectWebglVersion);
++        return WebGLAny(script_state,
++                        String("WebGL 2.0 (" + inner + ")"));
++      }
        return WebGLAny(
            script_state,
            StrCat({"WebGL 2.0 (", String(ContextGL()->GetString(GL_VERSION)),
@@ -61,10 +69,18 @@ index 132e1b3724f9d..3920cc830296a 100644
      case GL_COPY_READ_BUFFER_BINDING:
        return WebGLAny(script_state, bound_copy_read_buffer_.Get());
 diff --git a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc b/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
-index 72a80ba576711..e60f12eefb45f 100644
+index 72a80ba576711..12befc7d50b5c 100644
 --- a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
 +++ b/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
-@@ -110,6 +110,11 @@
+@@ -26,6 +26,7 @@
+ #include "third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.h"
+ 
+ #include <memory>
++#include <unordered_map>
+ #include <utility>
+ 
+ #include "base/bit_cast.h"
+@@ -110,6 +111,12 @@
  #include "third_party/blink/renderer/modules/webgl/webgl_context_attribute_helpers.h"
  #include "third_party/blink/renderer/modules/webgl/webgl_context_event.h"
  #include "third_party/blink/renderer/modules/webgl/webgl_debug_renderer_info.h"
@@ -73,31 +89,45 @@ index 72a80ba576711..e60f12eefb45f 100644
 +#include "base/strings/string_number_conversions.h"
 +#include "base/strings/string_split.h"
 +#include "third_party/blink/public/common/switches.h"
++#include "third_party/blink/renderer/platform/graphics/aspect_canvas_noise.h"
  #include "third_party/blink/renderer/modules/webgl/webgl_debug_shaders.h"
  #include "third_party/blink/renderer/modules/webgl/webgl_depth_texture.h"
  #include "third_party/blink/renderer/modules/webgl/webgl_draw_buffers.h"
-@@ -188,6 +193,20 @@ unsigned WebGLRenderingContextBase::max_active_webgl_contexts_on_worker_ = 0;
+@@ -188,6 +195,33 @@ unsigned WebGLRenderingContextBase::max_active_webgl_contexts_on_worker_ = 0;
  
  namespace {
  
-+// Aspect: parse comma-separated "key=value" param string.
-+// Format: "MAX_TEXTURE_SIZE=4096,MAX_RENDERBUFFER_SIZE=4096,..."
-+// Returns the value for |key|, or empty string if not found.
-+std::string AspectGetWebglParam(const std::string& params,
-+                                const std::string& key) {
-+  for (const auto& pair : base::SplitStringPiece(
-+           params, ",", base::TRIM_WHITESPACE, base::SPLIT_WANT_NONEMPTY)) {
-+    size_t eq = pair.find('=');
-+    if (eq != std::string_view::npos && pair.substr(0, eq) == key)
-+      return std::string(pair.substr(eq + 1));
-+  }
-+  return {};
++// Aspect: parse hex-based "HEX=value" param string into a map.
++// Format: "0D33=16384,0D3D=32767x32767,846E=1-1,..."
++// GLenum keys are hex (no 0x prefix), values are int, WxH, or min-max.
++using AspectParamMap = std::unordered_map<GLenum, std::string>;
++
++const AspectParamMap& GetAspectWebglParams() {
++  static const base::NoDestructor<AspectParamMap> params([]() -> AspectParamMap {
++    AspectParamMap m;
++    const auto& cmd = *base::CommandLine::ForCurrentProcess();
++    if (!cmd.HasSwitch(blink::switches::kAspectWebglParams))
++      return m;
++    std::string raw = cmd.GetSwitchValueASCII(blink::switches::kAspectWebglParams);
++    for (const auto& pair : base::SplitStringPiece(
++             raw, ",", base::TRIM_WHITESPACE, base::SPLIT_WANT_NONEMPTY)) {
++      size_t eq = pair.find('=');
++      if (eq == std::string_view::npos)
++        continue;
++      uint32_t hex_val = 0;
++      if (!base::HexStringToUInt(pair.substr(0, eq), &hex_val))
++        continue;
++      m[static_cast<GLenum>(hex_val)] = std::string(pair.substr(eq + 1));
++    }
++    return m;
++  }());
++  return *params;
 +}
 +
  enum class WebGLANGLEImplementation {
    // These values are persisted to logs. Entries should not be renumbered and
    // numeric values should never be reused.
-@@ -3650,6 +3669,25 @@ bool WebGLRenderingContextBase::TimerQueryExtensionsEnabled() {
+@@ -3650,6 +3684,25 @@ bool WebGLRenderingContextBase::TimerQueryExtensionsEnabled() {
  
  ScriptObject WebGLRenderingContextBase::getExtension(ScriptState* script_state,
                                                       const String& name) {
@@ -123,113 +153,39 @@ index 72a80ba576711..e60f12eefb45f 100644
    ExecutionContext* context = ExecutionContext::From(script_state);
  
    if (name == WebGLDebugRendererInfo::ExtensionName()) {
-@@ -3767,6 +3805,105 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
+@@ -3767,6 +3820,31 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
                                                      GLenum pname) {
    if (isContextLost())
      return ScriptValue::CreateNull(script_state->GetIsolate());
 +
-+  // Aspect: GL_VERSION / GL_SHADING_LANGUAGE_VERSION spoofing.
++  // Aspect: GL_VERSION spoofing — construct correct prefix for WebGL1 context.
 +  if (pname == GL_VERSION) {
-+    static const base::NoDestructor<std::string> ver([]() -> std::string {
++    static const base::NoDestructor<std::string> inner([]() -> std::string {
 +      const auto& cmd = *base::CommandLine::ForCurrentProcess();
 +      if (cmd.HasSwitch(blink::switches::kAspectWebglVersion))
 +        return cmd.GetSwitchValueASCII(blink::switches::kAspectWebglVersion);
 +      return {};
 +    }());
-+    if (!ver->empty())
-+      return WebGLAny(script_state, String(*ver));
++    if (!inner->empty())
++      return WebGLAny(script_state,
++                      String("WebGL 1.0 (" + *inner + ")"));
 +  }
 +  if (pname == GL_SHADING_LANGUAGE_VERSION) {
-+    static const base::NoDestructor<std::string> ver([]() -> std::string {
++    static const base::NoDestructor<std::string> inner([]() -> std::string {
 +      const auto& cmd = *base::CommandLine::ForCurrentProcess();
 +      if (cmd.HasSwitch(blink::switches::kAspectWebglGlslVersion))
 +        return cmd.GetSwitchValueASCII(blink::switches::kAspectWebglGlslVersion);
 +      return {};
 +    }());
-+    if (!ver->empty())
-+      return WebGLAny(script_state, String(*ver));
-+  }
-+
-+  // Aspect: intercept hardware-dependent params with spoofed values.
-+  {
-+    static const base::NoDestructor<std::string> webgl_params([]() -> std::string {
-+      const auto& cmd = *base::CommandLine::ForCurrentProcess();
-+      if (cmd.HasSwitch(blink::switches::kAspectWebglParams))
-+        return cmd.GetSwitchValueASCII(blink::switches::kAspectWebglParams);
-+      return {};
-+    }());
-+    if (!webgl_params->empty()) {
-+      // Map GL enum to param key name.
-+      const char* param_key = nullptr;
-+      bool is_int_param = true;
-+      switch (pname) {
-+        case GL_MAX_TEXTURE_SIZE: param_key = "MAX_TEXTURE_SIZE"; break;
-+        case GL_MAX_CUBE_MAP_TEXTURE_SIZE: param_key = "MAX_CUBE_MAP_TEXTURE_SIZE"; break;
-+        case GL_MAX_RENDERBUFFER_SIZE: param_key = "MAX_RENDERBUFFER_SIZE"; break;
-+        case GL_MAX_VIEWPORT_DIMS: param_key = "MAX_VIEWPORT_DIMS"; break;
-+        case GL_MAX_TEXTURE_IMAGE_UNITS: param_key = "MAX_TEXTURE_IMAGE_UNITS"; break;
-+        case GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS: param_key = "MAX_COMBINED_TEXTURE_IMAGE_UNITS"; break;
-+        case GL_MAX_VERTEX_ATTRIBS: param_key = "MAX_VERTEX_ATTRIBS"; break;
-+        case GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS: param_key = "MAX_VERTEX_TEXTURE_IMAGE_UNITS"; break;
-+        case GL_MAX_VERTEX_UNIFORM_VECTORS: param_key = "MAX_VERTEX_UNIFORM_VECTORS"; break;
-+        case GL_MAX_FRAGMENT_UNIFORM_VECTORS: param_key = "MAX_FRAGMENT_UNIFORM_VECTORS"; break;
-+        case GL_MAX_VARYING_VECTORS: param_key = "MAX_VARYING_VECTORS"; break;
-+        case GL_ALIASED_LINE_WIDTH_RANGE:
-+          param_key = "ALIASED_LINE_WIDTH_RANGE"; is_int_param = false; break;
-+        case GL_ALIASED_POINT_SIZE_RANGE:
-+          param_key = "ALIASED_POINT_SIZE_RANGE"; is_int_param = false; break;
-+        case GL_SUBPIXEL_BITS: param_key = "SUBPIXEL_BITS"; break;
-+        case GL_RED_BITS: param_key = "RED_BITS"; break;
-+        case GL_GREEN_BITS: param_key = "GREEN_BITS"; break;
-+        case GL_BLUE_BITS: param_key = "BLUE_BITS"; break;
-+        case GL_ALPHA_BITS: param_key = "ALPHA_BITS"; break;
-+        case GL_DEPTH_BITS: param_key = "DEPTH_BITS"; break;
-+        case GL_STENCIL_BITS: param_key = "STENCIL_BITS"; break;
-+        case GL_SAMPLE_BUFFERS: param_key = "SAMPLE_BUFFERS"; break;
-+        case GL_SAMPLES: param_key = "SAMPLES"; break;
-+        default: break;
-+      }
-+      if (param_key) {
-+        std::string val_str = AspectGetWebglParam(*webgl_params, param_key);
-+        if (!val_str.empty()) {
-+          if (pname == GL_MAX_VIEWPORT_DIMS) {
-+            // "WxH" format, e.g. "16384x16384"
-+            size_t x_pos = val_str.find('x');
-+            if (x_pos != std::string::npos) {
-+              int w = 0, h = 0;
-+              base::StringToInt(val_str.substr(0, x_pos), &w);
-+              base::StringToInt(val_str.substr(x_pos + 1), &h);
-+              GLint dims[2] = {w, h};
-+              return WebGLAny(script_state,
-+                  DOMInt32Array::Create(base::span(dims)));
-+            }
-+          } else if (pname == GL_ALIASED_LINE_WIDTH_RANGE ||
-+                     pname == GL_ALIASED_POINT_SIZE_RANGE) {
-+            // "min-max" format, e.g. "1-1" or "1-1024"
-+            size_t dash = val_str.find('-');
-+            if (dash != std::string::npos) {
-+              double lo = 0, hi = 0;
-+              base::StringToDouble(val_str.substr(0, dash), &lo);
-+              base::StringToDouble(val_str.substr(dash + 1), &hi);
-+              GLfloat range[2] = {static_cast<GLfloat>(lo),
-+                                  static_cast<GLfloat>(hi)};
-+              return WebGLAny(script_state,
-+                  DOMFloat32Array::Create(base::span(range)));
-+            }
-+          } else if (is_int_param) {
-+            int v = 0;
-+            if (base::StringToInt(val_str, &v))
-+              return WebGLAny(script_state, v);
-+          }
-+        }
-+      }
-+    }
++    if (!inner->empty())
++      return WebGLAny(script_state,
++                      String("WebGL GLSL ES 1.0 (" + *inner + ")"));
 +  }
 +
    const int kIntZero = 0;
    switch (pname) {
      case GL_ACTIVE_TEXTURE:
-@@ -3976,6 +4113,12 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
+@@ -3976,6 +4054,12 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
        return ScriptValue::CreateNull(script_state->GetIsolate());
      case WebGLDebugRendererInfo::kUnmaskedRendererWebgl:
        if (ExtensionEnabled(kWebGLDebugRendererInfoName)) {
@@ -242,7 +198,7 @@ index 72a80ba576711..e60f12eefb45f 100644
          return WebGLAny(script_state,
                          String(ContextGL()->GetString(GL_RENDERER)));
        }
-@@ -3985,6 +4128,12 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
+@@ -3985,6 +4069,12 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
        return ScriptValue::CreateNull(script_state->GetIsolate());
      case WebGLDebugRendererInfo::kUnmaskedVendorWebgl:
        if (ExtensionEnabled(kWebGLDebugRendererInfoName)) {
@@ -255,7 +211,7 @@ index 72a80ba576711..e60f12eefb45f 100644
          return WebGLAny(script_state,
                          String(ContextGL()->GetString(GL_VENDOR)));
        }
-@@ -4286,6 +4435,35 @@ WebGLShaderPrecisionFormat* WebGLRenderingContextBase::getShaderPrecisionFormat(
+@@ -4286,6 +4376,35 @@ WebGLShaderPrecisionFormat* WebGLRenderingContextBase::getShaderPrecisionFormat(
    GLint precision = 0;
    ContextGL()->GetShaderPrecisionFormat(shader_type, precision_type, range,
                                          &precision);
@@ -291,7 +247,7 @@ index 72a80ba576711..e60f12eefb45f 100644
    return MakeGarbageCollected<WebGLShaderPrecisionFormat>(range[0], range[1],
                                                            precision);
  }
-@@ -4309,6 +4487,32 @@ WebGLRenderingContextBase::getSupportedExtensions() {
+@@ -4309,6 +4428,32 @@ WebGLRenderingContextBase::getSupportedExtensions() {
      }
    }
  
@@ -324,6 +280,97 @@ index 72a80ba576711..e60f12eefb45f 100644
    return result;
  }
  
+@@ -5129,6 +5274,14 @@ void WebGLRenderingContextBase::ReadPixelsHelper(GLint x,
+     }
+     ContextGL()->ReadPixels(x, y, width, height, format, type, data);
+   }
++
++  // Aspect: apply canvas noise to WebGL readPixels output.
++  if (format == GL_RGBA && type == GL_UNSIGNED_BYTE && width > 0 &&
++      height > 0) {
++    uint64_t seed = GetCanvasNoiseSeed();
++    if (seed != 0)
++      ApplyCanvasNoiseRGBA(seed, data, width, height);
++  }
+ }
+ 
+ void WebGLRenderingContextBase::RenderbufferStorageImpl(
+@@ -7670,6 +7823,15 @@ ScriptValue WebGLRenderingContextBase::GetFloatParameter(
+ ScriptValue WebGLRenderingContextBase::GetIntParameter(
+     ScriptState* script_state,
+     GLenum pname) {
++  // Aspect: check spoofed param map first.
++  const auto& params = GetAspectWebglParams();
++  auto it = params.find(pname);
++  if (it != params.end()) {
++    int v = 0;
++    if (base::StringToInt(it->second, &v))
++      return WebGLAny(script_state, v);
++  }
++
+   GLint value = 0;
+   if (!isContextLost()) {
+     ContextGL()->GetIntegerv(pname, &value);
+@@ -7692,6 +7854,15 @@ ScriptValue WebGLRenderingContextBase::GetIntParameter(
+ ScriptValue WebGLRenderingContextBase::GetInt64Parameter(
+     ScriptState* script_state,
+     GLenum pname) {
++  // Aspect: check spoofed param map first.
++  const auto& params = GetAspectWebglParams();
++  auto it = params.find(pname);
++  if (it != params.end()) {
++    int64_t v = 0;
++    if (base::StringToInt64(it->second, &v))
++      return WebGLAny(script_state, v);
++  }
++
+   GLint64 value = 0;
+   if (!isContextLost())
+     ContextGL()->GetInteger64v(pname, &value);
+@@ -7710,6 +7881,21 @@ ScriptValue WebGLRenderingContextBase::GetUnsignedIntParameter(
+ ScriptValue WebGLRenderingContextBase::GetWebGLFloatArrayParameter(
+     ScriptState* script_state,
+     GLenum pname) {
++  // Aspect: check spoofed param map for range params (min-max format).
++  const auto& params = GetAspectWebglParams();
++  auto it = params.find(pname);
++  if (it != params.end()) {
++    size_t dash = it->second.find('-');
++    if (dash != std::string::npos) {
++      double lo = 0, hi = 0;
++      base::StringToDouble(it->second.substr(0, dash), &lo);
++      base::StringToDouble(it->second.substr(dash + 1), &hi);
++      GLfloat range[2] = {static_cast<GLfloat>(lo), static_cast<GLfloat>(hi)};
++      return WebGLAny(script_state,
++                      DOMFloat32Array::Create(base::span(range)));
++    }
++  }
++
+   std::array<GLfloat, 4> value = {0};
+   if (!isContextLost())
+     ContextGL()->GetFloatv(pname, value.data());
+@@ -7734,6 +7920,21 @@ ScriptValue WebGLRenderingContextBase::GetWebGLFloatArrayParameter(
+ ScriptValue WebGLRenderingContextBase::GetWebGLIntArrayParameter(
+     ScriptState* script_state,
+     GLenum pname) {
++  // Aspect: check spoofed param map for array params (WxH format).
++  const auto& params = GetAspectWebglParams();
++  auto it = params.find(pname);
++  if (it != params.end()) {
++    size_t x_pos = it->second.find('x');
++    if (x_pos != std::string::npos) {
++      int w = 0, h = 0;
++      base::StringToInt(it->second.substr(0, x_pos), &w);
++      base::StringToInt(it->second.substr(x_pos + 1), &h);
++      GLint dims[2] = {w, h};
++      return WebGLAny(script_state,
++                      DOMInt32Array::Create(base::span(dims)));
++    }
++  }
++
+   std::array<GLint, 4> value = {0};
+   if (!isContextLost())
+     ContextGL()->GetIntegerv(pname, value.data());
 -- 
 2.39.5
 

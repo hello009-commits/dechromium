@@ -1,22 +1,94 @@
-From 3d7a0df15557281575d6dae180c636514a9d507f Mon Sep 17 00:00:00 2001
+From 60d819604789585c7352ba84d1b2b44c9393710e Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:03:11 +0000
-Subject: [PATCH 05/12] 005-canvas-fingerprint
+Subject: [PATCH 05/13] 005-canvas-fingerprint
 
 Canvas fingerprint noise via --aspect-canvas-noise-seed:
 - getImageData path: base_rendering_context_2d.cc
 - toDataURL/toBlob path: image_data_buffer.cc
 - Both use edge-pixel-flip algorithm with deterministic seed
 ---
- .../canvas2d/base_rendering_context_2d.cc     |  93 ++++++++++++++++
- .../platform/graphics/image_data_buffer.cc    | 102 ++++++++++++++++++
- 2 files changed, 195 insertions(+)
+ .../html/canvas/canvas_async_blob_creator.cc  |  21 +++
+ .../html/canvas/canvas_async_blob_creator.h   |   4 +
+ .../canvas2d/base_rendering_context_2d.cc     |  14 ++
+ third_party/blink/renderer/platform/BUILD.gn  |   2 +
+ .../platform/graphics/aspect_canvas_noise.cc  | 172 ++++++++++++++++++
+ .../platform/graphics/aspect_canvas_noise.h   |  30 +++
+ .../platform/graphics/image_data_buffer.cc    |  22 +++
+ 7 files changed, 265 insertions(+)
+ create mode 100644 third_party/blink/renderer/platform/graphics/aspect_canvas_noise.cc
+ create mode 100644 third_party/blink/renderer/platform/graphics/aspect_canvas_noise.h
 
+diff --git a/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.cc b/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.cc
+index adb616defbf32..a1486808ada93 100644
+--- a/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.cc
++++ b/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.cc
+@@ -1,3 +1,8 @@
++#ifdef UNSAFE_BUFFERS_BUILD
++// Aspect: memcpy used for canvas noise writable pixel copy.
++#pragma allow_unsafe_buffers
++#endif
++
+ // Copyright 2015 The Chromium Authors
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
+@@ -16,6 +21,7 @@
+ #include "third_party/blink/renderer/core/execution_context/execution_context.h"
+ #include "third_party/blink/renderer/core/fileapi/blob.h"
+ #include "third_party/blink/renderer/core/html/canvas/canvas_rendering_context.h"
++#include "third_party/blink/renderer/platform/graphics/aspect_canvas_noise.h"
+ #include "third_party/blink/renderer/platform/graphics/image_data_buffer.h"
+ #include "third_party/blink/renderer/platform/graphics/skia/skia_utils.h"
+ #include "third_party/blink/renderer/platform/graphics/unaccelerated_static_bitmap_image.h"
+@@ -207,6 +213,21 @@ CanvasAsyncBlobCreator::CanvasAsyncBlobCreator(
+                            std::min(info.height(), max_dimension));
+         src_data_.reset(info, src_data_.addr(), src_data_.rowBytes());
+       }
++
++      // Aspect: apply canvas noise to toBlob/convertToBlob pixel data.
++      // peekPixels returns a read-only pointer, so we make a writable copy.
++      uint64_t noise_seed = GetCanvasNoiseSeed();
++      if (noise_seed != 0) {
++        size_t sz = src_data_.computeByteSize();
++        noised_storage_ = SkData::MakeUninitialized(sz);
++        memcpy(noised_storage_->writable_data(), src_data_.addr(), sz);
++        SkPixmap mutable_pm(src_data_.info(),
++                            noised_storage_->writable_data(),
++                            src_data_.rowBytes());
++        ApplyCanvasNoise(noise_seed, mutable_pm);
++        src_data_ = SkPixmap(src_data_.info(), noised_storage_->data(),
++                             src_data_.rowBytes());
++      }
+     }
+   }
+ 
+diff --git a/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.h b/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.h
+index 625c3204a0fae..a26e7c6136029 100644
+--- a/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.h
++++ b/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.h
+@@ -16,6 +16,7 @@
+ #include "third_party/blink/renderer/bindings/core/v8/v8_image_encode_options.h"
+ #include "third_party/blink/renderer/core/core_export.h"
+ #include "third_party/blink/renderer/platform/graphics/static_bitmap_image.h"
++#include "third_party/skia/include/core/SkData.h"
+ #include "third_party/blink/renderer/platform/heap/cross_thread_handle.h"
+ #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
+ #include "third_party/blink/renderer/platform/image-encoders/image_encoder.h"
+@@ -122,6 +123,9 @@ class CORE_EXPORT CanvasAsyncBlobCreator
+   // Used for OffscreenCanvas only
+   Member<ScriptPromiseResolver<Blob>> script_promise_resolver_;
+ 
++  // Aspect: writable copy of pixel data for canvas noise.
++  sk_sp<SkData> noised_storage_;
++
+   static bool EncodeImage(std::unique_ptr<ImageDataBuffer>,
+                           ImageEncodingMimeType,
+                           const double& quality,
 diff --git a/third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_context_2d.cc b/third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_context_2d.cc
-index de1f06bb71333..7abdb269cf833 100644
+index de1f06bb71333..d7105ba63a8d6 100644
 --- a/third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_context_2d.cc
 +++ b/third_party/blink/renderer/modules/canvas/canvas2d/base_rendering_context_2d.cc
-@@ -1,17 +1,27 @@
+@@ -1,12 +1,19 @@
 +#ifdef UNSAFE_BUFFERS_BUILD
 +// Aspect: pixel noise function uses raw pointer arithmetic for performance.
 +#pragma allow_unsafe_buffers
@@ -33,130 +105,259 @@ index de1f06bb71333..7abdb269cf833 100644
  #include <cstdint>
  #include <cstdlib>
 +#include <cstring>
-+#include <random>
  #include <memory>
-+#include <vector>
  #include <optional>
  #include <utility>
- 
- #include "base/check.h"
-+#include "base/command_line.h"
- #include "base/check_op.h"
- #include "base/location.h"
- #include "base/memory/scoped_refptr.h"
-@@ -20,6 +30,7 @@
- #include "base/notreached.h"
- #include "base/numerics/checked_math.h"
- #include "base/numerics/safe_conversions.h"
-+#include "base/strings/string_number_conversions.h"
- #include "base/task/single_thread_task_runner.h"
- #include "base/time/time.h"
- #include "cc/paint/paint_canvas.h"
-@@ -27,6 +38,7 @@
- #include "cc/paint/paint_image.h"
- #include "components/viz/common/resources/shared_image_format_utils.h"
- #include "third_party/abseil-cpp/absl/cleanup/cleanup.h"
-+#include "third_party/blink/public/common/switches.h"
- #include "third_party/blink/public/common/metrics/document_update_reason.h"
- #include "third_party/blink/public/mojom/devtools/console_message.mojom-blink-forward.h"
- #include "third_party/blink/renderer/bindings/core/v8/v8_canvas_text_align.h"
-@@ -129,6 +141,71 @@ bool IsContextProviderValid() {
-          !context_provider_wrapper->ContextProvider().IsContextLost();
- }
- 
-+// Aspect: content-dependent canvas noise adapted from upstream noise_helper.cc
-+struct AspectNoiseHash {
-+  uint64_t state;
-+  void Feed(uint64_t v) {
-+    state ^= v;
-+    state *= 0x100000001b3ULL;  // FNV1a prime
-+  }
-+  int GetValueBelow(int max_exclusive) {
-+    if (max_exclusive <= 1) return 0;
-+    Feed(0);
-+    return static_cast<int>(state % static_cast<uint64_t>(max_exclusive));
-+  }
-+};
-+
-+void AspectNoisePixels(uint64_t seed, uint8_t* pixels, int width, int height) {
-+  if (seed == 0 || width <= 0 || height <= 0) return;
-+  constexpr int kMaxNoise = 3;
-+  constexpr int kChannels = 4;
-+
-+  std::vector<uint8_t> prev_orig(width * kChannels, 0);
-+  std::vector<uint8_t> curr_orig(width * kChannels);
-+
-+  for (int y = 0; y < height; ++y) {
-+    uint8_t* row = pixels + y * width * kChannels;
-+    std::memcpy(curr_orig.data(), row, width * kChannels);
-+
-+    for (int x = 0; x < width; ++x) {
-+      uint8_t* px = row + x * kChannels;
-+      if (px[0] == 0 && px[1] == 0 && px[2] == 0 && px[3] == 0) continue;
-+
-+      const uint8_t* orig = curr_orig.data() + x * kChannels;
-+
-+      auto matches = [](const uint8_t* a, const uint8_t* b) {
-+        return a[0]==b[0] && a[1]==b[1] && a[2]==b[2] && a[3]==b[3];
-+      };
-+      if (y > 0 && x > 0 && matches(prev_orig.data()+(x-1)*kChannels, orig)) {
-+        std::memcpy(px, pixels+((y-1)*width+(x-1))*kChannels, kChannels); continue;
-+      }
-+      if (y > 0 && matches(prev_orig.data()+x*kChannels, orig)) {
-+        std::memcpy(px, pixels+((y-1)*width+x)*kChannels, kChannels); continue;
-+      }
-+      if (y > 0 && x < width-1 && matches(prev_orig.data()+(x+1)*kChannels, orig)) {
-+        std::memcpy(px, pixels+((y-1)*width+(x+1))*kChannels, kChannels); continue;
-+      }
-+      if (x > 0 && matches(curr_orig.data()+(x-1)*kChannels, orig)) {
-+        std::memcpy(px, row+(x-1)*kChannels, kChannels); continue;
-+      }
-+
-+      AspectNoiseHash h{seed ^ 0xcbf29ce484222325ULL};
-+      h.Feed(static_cast<uint64_t>(x) | (static_cast<uint64_t>(y) << 20));
-+      h.Feed(*reinterpret_cast<const uint32_t*>(orig));
-+
-+      for (int ch = 0; ch < kChannels; ++ch) {
-+        int v = px[ch];
-+        int lo = (ch == 3 && v > 0) ? 1 : 0;
-+        int mn = std::max(lo, v - kMaxNoise);
-+        int mx = std::min(255, v + kMaxNoise);
-+        int range = std::min(kMaxNoise * 2 + 1, mx - mn + 1);
-+        px[ch] = static_cast<uint8_t>(mn + h.GetValueBelow(range));
-+      }
-+    }
-+    std::swap(prev_orig, curr_orig);
-+  }
-+}
-+
- }  // namespace
- 
- constexpr char kDefaultFont[] = "10px sans-serif";
-@@ -524,6 +601,22 @@ ImageData* BaseRenderingContext2D::getImageDataInternal(
+@@ -80,6 +87,7 @@
+ #include "third_party/blink/renderer/platform/graphics/gpu/webgpu_cpp.h"
+ #include "third_party/blink/renderer/platform/graphics/gpu/webgpu_mailbox_texture.h"
+ #include "third_party/blink/renderer/platform/graphics/image.h"
++#include "third_party/blink/renderer/platform/graphics/aspect_canvas_noise.h"
+ #include "third_party/blink/renderer/platform/graphics/image_data_buffer.h"
+ #include "third_party/blink/renderer/platform/graphics/paint/paint_image.h"
+ #include "third_party/blink/renderer/platform/graphics/skia/skia_utils.h"
+@@ -524,6 +532,12 @@ ImageData* BaseRenderingContext2D::getImageDataInternal(
            snapshot->PaintImageForCurrentFrame().GetSkImageInfo().bounds();
        DCHECK(!bounds.intersect(SkIRect::MakeXYWH(sx, sy, sw, sh)));
      }
 +
-+    static const uint64_t canvas_seed = []() -> uint64_t {
-+      uint64_t s = 0;
-+      const auto& cmd = *base::CommandLine::ForCurrentProcess();
-+      if (cmd.HasSwitch(blink::switches::kAspectCanvasNoiseSeed))
-+        base::StringToUint64(
-+            cmd.GetSwitchValueASCII(blink::switches::kAspectCanvasNoiseSeed),
-+            &s);
-+      return s;
-+    }();
++    // Aspect: apply canvas noise to getImageData() result.
++    uint64_t canvas_seed = GetCanvasNoiseSeed();
 +    if (canvas_seed != 0 && read_pixels_successful) {
-+      AspectNoisePixels(
-+          canvas_seed,
-+          static_cast<uint8_t*>(image_data_pixmap.writable_addr()),
-+          image_data_pixmap.width(), image_data_pixmap.height());
++      ApplyCanvasNoise(canvas_seed, image_data_pixmap);
 +    }
    }
  
    return image_data;
+diff --git a/third_party/blink/renderer/platform/BUILD.gn b/third_party/blink/renderer/platform/BUILD.gn
+index d0a36746a94ee..f15644970440e 100644
+--- a/third_party/blink/renderer/platform/BUILD.gn
++++ b/third_party/blink/renderer/platform/BUILD.gn
+@@ -1077,6 +1077,8 @@ component("platform") {
+     "graphics/graphics_types_3d.h",
+     "graphics/image.cc",
+     "graphics/image.h",
++    "graphics/aspect_canvas_noise.cc",
++    "graphics/aspect_canvas_noise.h",
+     "graphics/image_data_buffer.cc",
+     "graphics/image_data_buffer.h",
+     "graphics/image_decoder_wrapper.cc",
+diff --git a/third_party/blink/renderer/platform/graphics/aspect_canvas_noise.cc b/third_party/blink/renderer/platform/graphics/aspect_canvas_noise.cc
+new file mode 100644
+index 0000000000000..2a4a0282131a2
+--- /dev/null
++++ b/third_party/blink/renderer/platform/graphics/aspect_canvas_noise.cc
+@@ -0,0 +1,172 @@
++#ifdef UNSAFE_BUFFERS_BUILD
++// Aspect: pixel noise function uses raw pointer arithmetic for performance.
++#pragma allow_unsafe_buffers
++#endif
++
++#include "third_party/blink/renderer/platform/graphics/aspect_canvas_noise.h"
++
++#include <algorithm>
++#include <cstring>
++
++#include "base/command_line.h"
++#include "base/strings/string_number_conversions.h"
++#include "third_party/blink/public/common/switches.h"
++#include "third_party/skia/include/core/SkColorType.h"
++
++namespace blink {
++
++namespace {
++
++// Splitmix64-style hash for quality mixing.
++struct NoiseHash {
++  uint64_t state;
++
++  void Mix(uint64_t v) {
++    state += v * 0x9e3779b97f4a7c15ULL;
++    state = (state ^ (state >> 30)) * 0xbf58476d1ce4e5b9ULL;
++    state = (state ^ (state >> 27)) * 0x94d049bb133111ebULL;
++    state ^= (state >> 31);
++  }
++
++  int ValueBelow(int max_exclusive) {
++    if (max_exclusive <= 1)
++      return 0;
++    Mix(0x517cc1b727220a95ULL);
++    return static_cast<int>(state % static_cast<uint64_t>(max_exclusive));
++  }
++};
++
++// Determine R/G/B/A byte offsets from SkColorType.
++// Returns false if the color type is not 4-bytes-per-pixel.
++bool GetChannelOffsets(SkColorType ct,
++                       int& r_off,
++                       int& g_off,
++                       int& b_off,
++                       int& a_off) {
++  switch (ct) {
++    case kRGBA_8888_SkColorType:
++      r_off = 0; g_off = 1; b_off = 2; a_off = 3;
++      return true;
++    case kBGRA_8888_SkColorType:
++      r_off = 2; g_off = 1; b_off = 0; a_off = 3;
++      return true;
++    default:
++      return false;
++  }
++}
++
++void ApplyNoiseImpl(uint64_t seed,
++                    uint8_t* pixels,
++                    int width,
++                    int height,
++                    size_t row_bytes,
++                    int r_off,
++                    int g_off,
++                    int b_off,
++                    int a_off) {
++  if (seed == 0 || width <= 0 || height <= 0)
++    return;
++
++  constexpr int kBpp = 4;
++
++  for (int y = 0; y < height; ++y) {
++    uint8_t* row = pixels + y * row_bytes;
++
++    for (int x = 0; x < width; ++x) {
++      uint8_t* px = row + x * kBpp;
++
++      // Skip fully transparent pixels.
++      if (px[a_off] == 0)
++        continue;
++
++      // Read semantic channel values for hashing.
++      uint8_t sr = px[r_off];
++      uint8_t sg = px[g_off];
++      uint8_t sb = px[b_off];
++
++      // Build deterministic hash from semantic values + position + seed.
++      NoiseHash h{seed};
++      h.Mix(static_cast<uint64_t>(x) | (static_cast<uint64_t>(y) << 20));
++      h.Mix(static_cast<uint64_t>(sr) | (static_cast<uint64_t>(sg) << 8) |
++            (static_cast<uint64_t>(sb) << 16));
++
++      // Edge detection: check if left or above neighbor differs significantly.
++      bool is_edge = false;
++      if (x > 0) {
++        uint8_t* left = row + (x - 1) * kBpp;
++        int dr = std::abs(static_cast<int>(sr) - left[r_off]);
++        int dg = std::abs(static_cast<int>(sg) - left[g_off]);
++        int db = std::abs(static_cast<int>(sb) - left[b_off]);
++        if (dr > 4 || dg > 4 || db > 4)
++          is_edge = true;
++      }
++      if (!is_edge && y > 0) {
++        uint8_t* above = pixels + (y - 1) * row_bytes + x * kBpp;
++        int dr = std::abs(static_cast<int>(sr) - above[r_off]);
++        int dg = std::abs(static_cast<int>(sg) - above[g_off]);
++        int db = std::abs(static_cast<int>(sb) - above[b_off]);
++        if (dr > 4 || dg > 4 || db > 4)
++          is_edge = true;
++      }
++
++      int max_noise = is_edge ? 2 : 1;
++
++      // Only modify ~15% of flat pixels (deterministic via hash).
++      if (!is_edge) {
++        if (h.ValueBelow(100) >= 15)
++          continue;
++      }
++
++      // Apply noise to R, G, B only — never modify alpha.
++      int offsets[3] = {r_off, g_off, b_off};
++      for (int ch : offsets) {
++        int v = px[ch];
++        int mn = std::max(0, v - max_noise);
++        int mx = std::min(255, v + max_noise);
++        int range = mx - mn + 1;
++        px[ch] = static_cast<uint8_t>(mn + h.ValueBelow(range));
++      }
++    }
++  }
++}
++
++}  // namespace
++
++uint64_t GetCanvasNoiseSeed() {
++  static const uint64_t seed = []() -> uint64_t {
++    uint64_t s = 0;
++    const auto& cmd = *base::CommandLine::ForCurrentProcess();
++    if (cmd.HasSwitch(blink::switches::kAspectCanvasNoiseSeed))
++      base::StringToUint64(
++          cmd.GetSwitchValueASCII(blink::switches::kAspectCanvasNoiseSeed), &s);
++    return s;
++  }();
++  return seed;
++}
++
++void ApplyCanvasNoise(uint64_t seed, SkPixmap& pixmap) {
++  if (seed == 0 || pixmap.width() <= 0 || pixmap.height() <= 0)
++    return;
++
++  int r_off, g_off, b_off, a_off;
++  if (!GetChannelOffsets(pixmap.colorType(), r_off, g_off, b_off, a_off))
++    return;
++
++  ApplyNoiseImpl(seed,
++                 static_cast<uint8_t*>(pixmap.writable_addr()),
++                 pixmap.width(), pixmap.height(), pixmap.rowBytes(),
++                 r_off, g_off, b_off, a_off);
++}
++
++void ApplyCanvasNoiseRGBA(uint64_t seed,
++                          uint8_t* pixels,
++                          int width,
++                          int height) {
++  if (seed == 0 || !pixels || width <= 0 || height <= 0)
++    return;
++  ApplyNoiseImpl(seed, pixels, width, height,
++                 static_cast<size_t>(width) * 4,
++                 /*r_off=*/0, /*g_off=*/1, /*b_off=*/2, /*a_off=*/3);
++}
++
++}  // namespace blink
+diff --git a/third_party/blink/renderer/platform/graphics/aspect_canvas_noise.h b/third_party/blink/renderer/platform/graphics/aspect_canvas_noise.h
+new file mode 100644
+index 0000000000000..b0bc68b51767b
+--- /dev/null
++++ b/third_party/blink/renderer/platform/graphics/aspect_canvas_noise.h
+@@ -0,0 +1,30 @@
++// Aspect: shared canvas noise function — channel-order-independent.
++#ifndef THIRD_PARTY_BLINK_RENDERER_PLATFORM_GRAPHICS_ASPECT_CANVAS_NOISE_H_
++#define THIRD_PARTY_BLINK_RENDERER_PLATFORM_GRAPHICS_ASPECT_CANVAS_NOISE_H_
++
++#include <cstdint>
++
++#include "third_party/blink/renderer/platform/platform_export.h"
++#include "third_party/skia/include/core/SkPixmap.h"
++
++namespace blink {
++
++// Apply deterministic noise to pixel data in a SkPixmap.
++// Reads pixmap.colorType() to determine R/G/B/A byte offsets, so the same
++// seed + pixel content produces identical noise regardless of RGBA vs BGRA
++// memory layout. Never modifies the alpha channel. Skips fully transparent
++// pixels.
++PLATFORM_EXPORT void ApplyCanvasNoise(uint64_t seed, SkPixmap& pixmap);
++
++// Convenience overload for raw RGBA_8888 buffers (always R=0,G=1,B=2,A=3).
++PLATFORM_EXPORT void ApplyCanvasNoiseRGBA(uint64_t seed,
++                                          uint8_t* pixels,
++                                          int width,
++                                          int height);
++
++// Read the canvas noise seed from the command line. Returns 0 if not set.
++PLATFORM_EXPORT uint64_t GetCanvasNoiseSeed();
++
++}  // namespace blink
++
++#endif  // THIRD_PARTY_BLINK_RENDERER_PLATFORM_GRAPHICS_ASPECT_CANVAS_NOISE_H_
 diff --git a/third_party/blink/renderer/platform/graphics/image_data_buffer.cc b/third_party/blink/renderer/platform/graphics/image_data_buffer.cc
-index c76f6553e1cec..1db3d45e7ce5d 100644
+index c76f6553e1cec..02a3b39847ce3 100644
 --- a/third_party/blink/renderer/platform/graphics/image_data_buffer.cc
 +++ b/third_party/blink/renderer/platform/graphics/image_data_buffer.cc
 @@ -1,3 +1,8 @@
@@ -168,111 +369,27 @@ index c76f6553e1cec..1db3d45e7ce5d 100644
  /*
   * Copyright (c) 2008, Google Inc. All rights reserved.
   * Copyright (C) 2009 Dirk Schulze <krit@webkit.org>
-@@ -32,7 +37,15 @@
+@@ -32,8 +37,12 @@
  
  #include "third_party/blink/renderer/platform/graphics/image_data_buffer.h"
  
 +#include <algorithm>
 +#include <cstring>
-+#include <random>
-+#include <vector>
 +
-+#include "base/command_line.h"
  #include "base/compiler_specific.h"
-+#include "base/strings/string_number_conversions.h"
-+#include "third_party/blink/public/common/switches.h"
  #include "base/memory/ptr_util.h"
++#include "third_party/blink/renderer/platform/graphics/aspect_canvas_noise.h"
  #include "third_party/blink/renderer/platform/image-encoders/image_encoder_utils.h"
  #include "third_party/blink/renderer/platform/wtf/text/base64.h"
-@@ -43,6 +56,73 @@
- 
- namespace blink {
- 
-+namespace {
-+// Aspect: content-dependent canvas noise adapted from upstream noise_helper.cc
-+struct AspectNoiseHash {
-+  uint64_t state;
-+  void Feed(uint64_t v) {
-+    state ^= v;
-+    state *= 0x100000001b3ULL;  // FNV1a prime
-+  }
-+  int GetValueBelow(int max_exclusive) {
-+    if (max_exclusive <= 1) return 0;
-+    Feed(0);
-+    return static_cast<int>(state % static_cast<uint64_t>(max_exclusive));
-+  }
-+};
-+
-+void AspectNoisePixels(uint64_t seed, uint8_t* pixels, int width, int height) {
-+  if (seed == 0 || width <= 0 || height <= 0) return;
-+  constexpr int kMaxNoise = 3;
-+  constexpr int kChannels = 4;
-+
-+  std::vector<uint8_t> prev_orig(width * kChannels, 0);
-+  std::vector<uint8_t> curr_orig(width * kChannels);
-+
-+  for (int y = 0; y < height; ++y) {
-+    uint8_t* row = pixels + y * width * kChannels;
-+    std::memcpy(curr_orig.data(), row, width * kChannels);
-+
-+    for (int x = 0; x < width; ++x) {
-+      uint8_t* px = row + x * kChannels;
-+      if (px[0] == 0 && px[1] == 0 && px[2] == 0 && px[3] == 0) continue;
-+
-+      const uint8_t* orig = curr_orig.data() + x * kChannels;
-+
-+      auto matches = [](const uint8_t* a, const uint8_t* b) {
-+        return a[0]==b[0] && a[1]==b[1] && a[2]==b[2] && a[3]==b[3];
-+      };
-+      if (y > 0 && x > 0 && matches(prev_orig.data()+(x-1)*kChannels, orig)) {
-+        std::memcpy(px, pixels+((y-1)*width+(x-1))*kChannels, kChannels); continue;
-+      }
-+      if (y > 0 && matches(prev_orig.data()+x*kChannels, orig)) {
-+        std::memcpy(px, pixels+((y-1)*width+x)*kChannels, kChannels); continue;
-+      }
-+      if (y > 0 && x < width-1 && matches(prev_orig.data()+(x+1)*kChannels, orig)) {
-+        std::memcpy(px, pixels+((y-1)*width+(x+1))*kChannels, kChannels); continue;
-+      }
-+      if (x > 0 && matches(curr_orig.data()+(x-1)*kChannels, orig)) {
-+        std::memcpy(px, row+(x-1)*kChannels, kChannels); continue;
-+      }
-+
-+      AspectNoiseHash h{seed ^ 0xcbf29ce484222325ULL};
-+      h.Feed(static_cast<uint64_t>(x) | (static_cast<uint64_t>(y) << 20));
-+      h.Feed(*reinterpret_cast<const uint32_t*>(orig));
-+
-+      for (int ch = 0; ch < kChannels; ++ch) {
-+        int v = px[ch];
-+        int lo = (ch == 3 && v > 0) ? 1 : 0;
-+        int mn = std::max(lo, v - kMaxNoise);
-+        int mx = std::min(255, v + kMaxNoise);
-+        int range = std::min(kMaxNoise * 2 + 1, mx - mn + 1);
-+        px[ch] = static_cast<uint8_t>(mn + h.GetValueBelow(range));
-+      }
-+    }
-+    std::swap(prev_orig, curr_orig);
-+  }
-+}
-+}  // namespace
-+
- ImageDataBuffer::ImageDataBuffer(scoped_refptr<StaticBitmapImage> image) {
-   if (!image)
-     return;
-@@ -97,6 +177,28 @@ ImageDataBuffer::ImageDataBuffer(scoped_refptr<StaticBitmapImage> image) {
+ #include "third_party/blink/renderer/platform/wtf/text/strcat.h"
+@@ -97,6 +106,19 @@ ImageDataBuffer::ImageDataBuffer(scoped_refptr<StaticBitmapImage> image) {
      MSAN_CHECK_MEM_IS_INITIALIZED(pixmap_.addr(), pixmap_.computeByteSize());
    }
    is_valid_ = true;
 +
-+  static const uint64_t canvas_seed = []() -> uint64_t {
-+    uint64_t s = 0;
-+    const auto& cmd = *base::CommandLine::ForCurrentProcess();
-+    if (cmd.HasSwitch(blink::switches::kAspectCanvasNoiseSeed))
-+      base::StringToUint64(
-+          cmd.GetSwitchValueASCII(blink::switches::kAspectCanvasNoiseSeed), &s);
-+    return s;
-+  }();
-+  if (canvas_seed != 0 && pixmap_.width() > 0 && pixmap_.height() > 0 &&
-+      pixmap_.info().bytesPerPixel() >= 3) {
++  // Aspect: apply canvas noise (covers toDataURL and toBlob encoding paths).
++  uint64_t canvas_seed = GetCanvasNoiseSeed();
++  if (canvas_seed != 0 && pixmap_.width() > 0 && pixmap_.height() > 0) {
 +    size_t byte_size = pixmap_.computeByteSize();
 +    sk_sp<SkData> noise_data = SkData::MakeUninitialized(byte_size);
 +    UNSAFE_BUFFERS(memcpy(noise_data->writable_data(), pixmap_.addr(), byte_size));
@@ -280,9 +397,7 @@ index c76f6553e1cec..1db3d45e7ce5d 100644
 +    retained_image_ =
 +        SkImages::RasterFromData(pixmap_.info(), noise_data, pixmap_.rowBytes());
 +    pixmap_ = SkPixmap(pixmap_.info(), pixels, pixmap_.rowBytes());
-+
-+    AspectNoisePixels(canvas_seed, static_cast<uint8_t*>(pixels),
-+                      pixmap_.width(), pixmap_.height());
++    ApplyCanvasNoise(canvas_seed, pixmap_);
 +  }
  }
  

@@ -1,7 +1,7 @@
-From fa08665ac9dbb8a011f71076bf6c8434d807c05a Mon Sep 17 00:00:00 2001
+From 1ac0098e81c959849124cbdc54dbbe05536cc81a Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:19:57 +0000
-Subject: [PATCH 10/12] 010-font-control
+Subject: [PATCH 10/13] 010-font-control
 
 Strict font family matching in font_cache_skia.cc:
 - Return nullptr when requested font name doesn't match actual family name

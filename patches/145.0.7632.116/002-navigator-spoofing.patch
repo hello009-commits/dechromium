@@ -1,7 +1,7 @@
-From 3555dcb388c7106ffd108f05cc02a5844cfe34f6 Mon Sep 17 00:00:00 2001
+From b8b56c886fbfc30d6b06d1e420af42fc4b3f0537 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:01:01 +0000
-Subject: [PATCH 02/12] 002-navigator-spoofing
+Subject: [PATCH 02/13] 002-navigator-spoofing
 
 Navigator fingerprint spoofing:
 - webdriver always returns false

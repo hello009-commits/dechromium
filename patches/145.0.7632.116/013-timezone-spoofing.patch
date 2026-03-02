@@ -1,0 +1,51 @@
+From c94ae2b9dbd5fc64a2a113306e42da861a581d8e Mon Sep 17 00:00:00 2001
+From: ENbanned <nik.skvortsov2007@gmail.com>
+Date: Mon, 2 Mar 2026 11:37:42 +0000
+Subject: [PATCH 13/13] 013-timezone-spoofing
+
+---
+ .../renderer/core/timezone/timezone_controller.cc  | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/third_party/blink/renderer/core/timezone/timezone_controller.cc b/third_party/blink/renderer/core/timezone/timezone_controller.cc
+index 48eb8d2fbdcf5..d5585e13e7426 100644
+--- a/third_party/blink/renderer/core/timezone/timezone_controller.cc
++++ b/third_party/blink/renderer/core/timezone/timezone_controller.cc
+@@ -4,6 +4,7 @@
+ 
+ #include "third_party/blink/renderer/core/timezone/timezone_controller.h"
+ 
++#include "base/command_line.h"
+ #include "base/feature_list.h"
+ #include "mojo/public/cpp/bindings/pending_remote.h"
+ #include "mojo/public/cpp/bindings/remote.h"
+@@ -23,6 +24,7 @@
+ #include "third_party/blink/renderer/platform/scheduler/public/main_thread.h"
+ #include "third_party/blink/renderer/platform/scheduler/public/main_thread_scheduler.h"
+ #include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
++#include "third_party/blink/public/common/switches.h"
+ #include "third_party/blink/renderer/platform/wtf/text/unicode_string.h"
+ #include "third_party/blink/renderer/platform/wtf/wtf.h"
+ #include "third_party/icu/source/i18n/unicode/timezone.h"
+@@ -109,6 +111,18 @@ void TimeZoneController::Init() {
+   Platform::Current()->GetBrowserInterfaceBroker()->GetInterface(
+       monitor.BindNewPipeAndPassReceiver());
+   monitor->AddClient(instance().receiver_.BindNewPipeAndPassRemote());
++
++  // Aspect: apply timezone override from command-line switch.
++  const auto& cmd = *base::CommandLine::ForCurrentProcess();
++  if (cmd.HasSwitch(blink::switches::kAspectTimezone)) {
++    String tz_id = String::FromUTF8(
++        cmd.GetSwitchValueASCII(blink::switches::kAspectTimezone));
++    if (!tz_id.empty()) {
++      base::AutoLock locker(instance().lock_);
++      instance().override_timezone_id_ = tz_id;
++      SetIcuTimeZoneAndNotifyV8(tz_id);
++    }
++  }
+ }
+ 
+ // static
+-- 
+2.39.5
+

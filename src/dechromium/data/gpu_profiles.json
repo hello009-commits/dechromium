@@ -5,10 +5,19 @@
         "0D33": 16384,
         "851C": 16384,
         "84E8": 16384,
-        "0D3D": [32767, 32767],
+        "0D3D": [
+          32767,
+          32767
+        ],
         "8073": 2048,
-        "846D": [1, 1024],
-        "846E": [1, 1],
+        "846D": [
+          1,
+          1024
+        ],
+        "846E": [
+          1,
+          1
+        ],
         "8869": 16,
         "8B4D": 32,
         "8B4C": 16,
@@ -53,15 +62,22 @@
         "WEBGL_compressed_texture_s3tc",
         "WEBGL_compressed_texture_s3tc_srgb",
         "WEBGL_debug_renderer_info",
-        "WEBGL_debug_shaders",
         "WEBGL_lose_context",
         "WEBGL_multi_draw",
         "WEBGL_polygon_mode",
         "WEBGL_stencil_texturing"
       ],
       "shader_precision": {
-        "high_float": [127, 127, 23],
-        "medium_float": [127, 127, 23]
+        "high_float": [
+          127,
+          127,
+          23
+        ],
+        "medium_float": [
+          127,
+          127,
+          23
+        ]
       }
     },
     "metal": {
@@ -69,10 +85,19 @@
         "0D33": 16384,
         "851C": 16384,
         "84E8": 16384,
-        "0D3D": [16384, 16384],
+        "0D3D": [
+          16384,
+          16384
+        ],
         "8073": 2048,
-        "846D": [1, 511],
-        "846E": [1, 1],
+        "846D": [
+          1,
+          511
+        ],
+        "846E": [
+          1,
+          1
+        ],
         "8869": 16,
         "8B4D": 32,
         "8B4C": 16,
@@ -117,7 +142,6 @@
         "WEBGL_compressed_texture_s3tc",
         "WEBGL_compressed_texture_s3tc_srgb",
         "WEBGL_debug_renderer_info",
-        "WEBGL_debug_shaders",
         "WEBGL_lose_context",
         "WEBGL_multi_draw",
         "WEBGL_polygon_mode",
@@ -130,8 +154,16 @@
         "WEBGL_render_shared_exponent"
       ],
       "shader_precision": {
-        "high_float": [127, 127, 23],
-        "medium_float": [127, 127, 23]
+        "high_float": [
+          127,
+          127,
+          23
+        ],
+        "medium_float": [
+          127,
+          127,
+          23
+        ]
       }
     },
     "swiftshader": {
@@ -139,10 +171,19 @@
         "0D33": 8192,
         "851C": 16384,
         "84E8": 8192,
-        "0D3D": [8192, 8192],
+        "0D3D": [
+          8192,
+          8192
+        ],
         "8073": 2048,
-        "846D": [1, 1023],
-        "846E": [1, 1],
+        "846D": [
+          1,
+          1023
+        ],
+        "846E": [
+          1,
+          1
+        ],
         "8869": 16,
         "8B4D": 64,
         "8B4C": 32,
@@ -190,128 +231,644 @@
         "WEBGL_compressed_texture_s3tc",
         "WEBGL_compressed_texture_s3tc_srgb",
         "WEBGL_debug_renderer_info",
-        "WEBGL_debug_shaders",
         "WEBGL_lose_context",
         "WEBGL_multi_draw",
         "WEBGL_polygon_mode",
         "WEBGL_stencil_texturing"
       ],
       "shader_precision": {
-        "high_float": [127, 127, 23],
-        "medium_float": [15, 15, 10]
+        "high_float": [
+          127,
+          127,
+          23
+        ],
+        "medium_float": [
+          15,
+          15,
+          10
+        ]
       }
     }
   },
   "gpus": [
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 4090", "device_id": "0x00002684", "backend": "d3d11", "tier": "enthusiast", "weight": 3},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 4080 SUPER", "device_id": "0x00002702", "backend": "d3d11", "tier": "enthusiast", "weight": 3},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 4080", "device_id": "0x00002704", "backend": "d3d11", "tier": "enthusiast", "weight": 4},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 4070 Ti SUPER", "device_id": "0x00002705", "backend": "d3d11", "tier": "performance", "weight": 5},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 4070 Ti", "device_id": "0x00002782", "backend": "d3d11", "tier": "performance", "weight": 6},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 4070 SUPER", "device_id": "0x00002783", "backend": "d3d11", "tier": "performance", "weight": 6},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 4070", "device_id": "0x00002786", "backend": "d3d11", "tier": "performance", "weight": 8},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 4060 Ti", "device_id": "0x00002803", "backend": "d3d11", "tier": "mainstream", "weight": 10},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 4060", "device_id": "0x00002882", "backend": "d3d11", "tier": "mainstream", "weight": 12},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 3090", "device_id": "0x00002204", "backend": "d3d11", "tier": "enthusiast", "weight": 4},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 3080 Ti", "device_id": "0x00002208", "backend": "d3d11", "tier": "enthusiast", "weight": 4},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 3080", "device_id": "0x00002206", "backend": "d3d11", "tier": "performance", "weight": 6},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 3070 Ti", "device_id": "0x00002482", "backend": "d3d11", "tier": "performance", "weight": 5},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 3070", "device_id": "0x00002484", "backend": "d3d11", "tier": "performance", "weight": 7},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 3060 Ti", "device_id": "0x00002486", "backend": "d3d11", "tier": "mainstream", "weight": 10},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 3060", "device_id": "0x00002504", "backend": "d3d11", "tier": "mainstream", "weight": 14},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 3050", "device_id": "0x00002507", "backend": "d3d11", "tier": "budget", "weight": 8},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce GTX 1660 SUPER", "device_id": "0x000021C4", "backend": "d3d11", "tier": "budget", "weight": 8},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce GTX 1660 Ti", "device_id": "0x00002182", "backend": "d3d11", "tier": "budget", "weight": 6},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce GTX 1660", "device_id": "0x00002184", "backend": "d3d11", "tier": "budget", "weight": 5},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce GTX 1650", "device_id": "0x00001F82", "backend": "d3d11", "tier": "budget", "weight": 7},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce GTX 1080 Ti", "device_id": "0x00001B06", "backend": "d3d11", "tier": "performance", "weight": 4},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce GTX 1080", "device_id": "0x00001B80", "backend": "d3d11", "tier": "mainstream", "weight": 4},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce GTX 1070", "device_id": "0x00001B81", "backend": "d3d11", "tier": "mainstream", "weight": 4},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce GTX 1060 6GB", "device_id": "0x00001C03", "backend": "d3d11", "tier": "budget", "weight": 5},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 5090", "device_id": "0x00002B85", "backend": "d3d11", "tier": "enthusiast", "weight": 2},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 5080", "device_id": "0x00002B87", "backend": "d3d11", "tier": "enthusiast", "weight": 2},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 5070 Ti", "device_id": "0x00002B89", "backend": "d3d11", "tier": "performance", "weight": 3},
-    {"vendor_prefix": "NVIDIA", "model": "NVIDIA GeForce RTX 5070", "device_id": "0x00002B8B", "backend": "d3d11", "tier": "performance", "weight": 3},
-
-    {"vendor_prefix": "AMD", "model": "Radeon RX 580 Series", "device_id": "0x000067DF", "backend": "d3d11", "tier": "budget", "weight": 5},
-    {"vendor_prefix": "AMD", "model": "AMD Radeon RX 5700 XT", "device_id": "0x0000731F", "backend": "d3d11", "tier": "mainstream", "weight": 5},
-    {"vendor_prefix": "AMD", "model": "AMD Radeon RX 5600 XT", "device_id": "0x00007340", "backend": "d3d11", "tier": "budget", "weight": 4},
-    {"vendor_prefix": "AMD", "model": "AMD Radeon RX 6900 XT", "device_id": "0x000073BF", "backend": "d3d11", "tier": "enthusiast", "weight": 3},
-    {"vendor_prefix": "AMD", "model": "AMD Radeon RX 6800 XT", "device_id": "0x000073BF", "backend": "d3d11", "tier": "performance", "weight": 4},
-    {"vendor_prefix": "AMD", "model": "AMD Radeon RX 6700 XT", "device_id": "0x000073DF", "backend": "d3d11", "tier": "mainstream", "weight": 6},
-    {"vendor_prefix": "AMD", "model": "AMD Radeon RX 6600 XT", "device_id": "0x000073FF", "backend": "d3d11", "tier": "budget", "weight": 5},
-    {"vendor_prefix": "AMD", "model": "AMD Radeon RX 7900 XTX", "device_id": "0x0000744C", "backend": "d3d11", "tier": "enthusiast", "weight": 3},
-    {"vendor_prefix": "AMD", "model": "AMD Radeon RX 7900 XT", "device_id": "0x0000744C", "backend": "d3d11", "tier": "enthusiast", "weight": 3},
-    {"vendor_prefix": "AMD", "model": "AMD Radeon RX 7800 XT", "device_id": "0x00007480", "backend": "d3d11", "tier": "performance", "weight": 5},
-    {"vendor_prefix": "AMD", "model": "AMD Radeon RX 7600", "device_id": "0x00007480", "backend": "d3d11", "tier": "mainstream", "weight": 6},
-
-    {"vendor_prefix": "Intel", "model": "Intel(R) UHD Graphics 630", "device_id": "0x00003E92", "backend": "d3d11", "tier": "budget", "weight": 8},
-    {"vendor_prefix": "Intel", "model": "Intel(R) UHD Graphics 770", "device_id": "0x00004680", "backend": "d3d11", "tier": "budget", "weight": 6},
-    {"vendor_prefix": "Intel", "model": "Intel(R) Iris(R) Xe Graphics", "device_id": "0x00009A49", "backend": "d3d11", "tier": "budget", "weight": 7},
-    {"vendor_prefix": "Intel", "model": "Intel(R) UHD Graphics 730", "device_id": "0x00004692", "backend": "d3d11", "tier": "budget", "weight": 5},
-    {"vendor_prefix": "Intel", "model": "Intel(R) Arc(TM) A770", "device_id": "0x000056A1", "backend": "d3d11", "tier": "mainstream", "weight": 3},
-    {"vendor_prefix": "Intel", "model": "Intel(R) Arc(TM) A750", "device_id": "0x000056A5", "backend": "d3d11", "tier": "mainstream", "weight": 3},
-
-    {"vendor_prefix": "Apple", "model": "Apple M1", "device_id": null, "backend": "metal", "tier": "apple", "weight": 12},
-    {"vendor_prefix": "Apple", "model": "Apple M1 Pro", "device_id": null, "backend": "metal", "tier": "apple_pro", "weight": 8},
-    {"vendor_prefix": "Apple", "model": "Apple M1 Max", "device_id": null, "backend": "metal", "tier": "apple_pro", "weight": 5},
-    {"vendor_prefix": "Apple", "model": "Apple M2", "device_id": null, "backend": "metal", "tier": "apple", "weight": 10},
-    {"vendor_prefix": "Apple", "model": "Apple M2 Pro", "device_id": null, "backend": "metal", "tier": "apple_pro", "weight": 7},
-    {"vendor_prefix": "Apple", "model": "Apple M2 Max", "device_id": null, "backend": "metal", "tier": "apple_pro", "weight": 4},
-    {"vendor_prefix": "Apple", "model": "Apple M3", "device_id": null, "backend": "metal", "tier": "apple", "weight": 8},
-    {"vendor_prefix": "Apple", "model": "Apple M3 Pro", "device_id": null, "backend": "metal", "tier": "apple_pro", "weight": 6},
-    {"vendor_prefix": "Apple", "model": "Apple M3 Max", "device_id": null, "backend": "metal", "tier": "apple_pro", "weight": 3},
-    {"vendor_prefix": "Apple", "model": "Apple M4", "device_id": null, "backend": "metal", "tier": "apple", "weight": 5},
-    {"vendor_prefix": "Apple", "model": "Apple M4 Pro", "device_id": null, "backend": "metal", "tier": "apple_pro", "weight": 3},
-    {"vendor_prefix": "Apple", "model": "Apple M4 Max", "device_id": null, "backend": "metal", "tier": "apple_pro", "weight": 2}
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 4090",
+      "device_id": "0x00002684",
+      "backend": "d3d11",
+      "tier": "enthusiast",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 4080 SUPER",
+      "device_id": "0x00002702",
+      "backend": "d3d11",
+      "tier": "enthusiast",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 4080",
+      "device_id": "0x00002704",
+      "backend": "d3d11",
+      "tier": "enthusiast",
+      "weight": 4
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 4070 Ti SUPER",
+      "device_id": "0x00002705",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 4070 Ti",
+      "device_id": "0x00002782",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 6
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 4070 SUPER",
+      "device_id": "0x00002783",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 6
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 4070",
+      "device_id": "0x00002786",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 8
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 4060 Ti",
+      "device_id": "0x00002803",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 10
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 4060",
+      "device_id": "0x00002882",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 12
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 3090",
+      "device_id": "0x00002204",
+      "backend": "d3d11",
+      "tier": "enthusiast",
+      "weight": 4
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 3080 Ti",
+      "device_id": "0x00002208",
+      "backend": "d3d11",
+      "tier": "enthusiast",
+      "weight": 4
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 3080",
+      "device_id": "0x00002206",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 6
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 3070 Ti",
+      "device_id": "0x00002482",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 3070",
+      "device_id": "0x00002484",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 7
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 3060 Ti",
+      "device_id": "0x00002486",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 10
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 3060",
+      "device_id": "0x00002504",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 14
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 3050",
+      "device_id": "0x00002507",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 8
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce GTX 1660 SUPER",
+      "device_id": "0x000021C4",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 8
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce GTX 1660 Ti",
+      "device_id": "0x00002182",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 6
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce GTX 1660",
+      "device_id": "0x00002184",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce GTX 1650",
+      "device_id": "0x00001F82",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 7
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce GTX 1080 Ti",
+      "device_id": "0x00001B06",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 4
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce GTX 1080",
+      "device_id": "0x00001B80",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 4
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce GTX 1070",
+      "device_id": "0x00001B81",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 4
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce GTX 1060 6GB",
+      "device_id": "0x00001C03",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 5090",
+      "device_id": "0x00002B85",
+      "backend": "d3d11",
+      "tier": "enthusiast",
+      "weight": 2
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 5080",
+      "device_id": "0x00002B87",
+      "backend": "d3d11",
+      "tier": "enthusiast",
+      "weight": 2
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 5070 Ti",
+      "device_id": "0x00002B89",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "NVIDIA",
+      "model": "NVIDIA GeForce RTX 5070",
+      "device_id": "0x00002B8B",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "Radeon RX 580 Series",
+      "device_id": "0x000067DF",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "AMD Radeon RX 5700 XT",
+      "device_id": "0x0000731F",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "AMD Radeon RX 5600 XT",
+      "device_id": "0x00007340",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 4
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "AMD Radeon RX 6900 XT",
+      "device_id": "0x000073BF",
+      "backend": "d3d11",
+      "tier": "enthusiast",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "AMD Radeon RX 6800 XT",
+      "device_id": "0x000073BF",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 4
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "AMD Radeon RX 6700 XT",
+      "device_id": "0x000073DF",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 6
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "AMD Radeon RX 6600 XT",
+      "device_id": "0x000073FF",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "AMD Radeon RX 7900 XTX",
+      "device_id": "0x0000744C",
+      "backend": "d3d11",
+      "tier": "enthusiast",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "AMD Radeon RX 7900 XT",
+      "device_id": "0x0000744C",
+      "backend": "d3d11",
+      "tier": "enthusiast",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "AMD Radeon RX 7800 XT",
+      "device_id": "0x00007480",
+      "backend": "d3d11",
+      "tier": "performance",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "AMD",
+      "model": "AMD Radeon RX 7600",
+      "device_id": "0x00007480",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 6
+    },
+    {
+      "vendor_prefix": "Intel",
+      "model": "Intel(R) UHD Graphics 630",
+      "device_id": "0x00003E92",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 8
+    },
+    {
+      "vendor_prefix": "Intel",
+      "model": "Intel(R) UHD Graphics 770",
+      "device_id": "0x00004680",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 6
+    },
+    {
+      "vendor_prefix": "Intel",
+      "model": "Intel(R) Iris(R) Xe Graphics",
+      "device_id": "0x00009A49",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 7
+    },
+    {
+      "vendor_prefix": "Intel",
+      "model": "Intel(R) UHD Graphics 730",
+      "device_id": "0x00004692",
+      "backend": "d3d11",
+      "tier": "budget",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "Intel",
+      "model": "Intel(R) Arc(TM) A770",
+      "device_id": "0x000056A1",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "Intel",
+      "model": "Intel(R) Arc(TM) A750",
+      "device_id": "0x000056A5",
+      "backend": "d3d11",
+      "tier": "mainstream",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M1",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple",
+      "weight": 12
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M1 Pro",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple_pro",
+      "weight": 8
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M1 Max",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple_pro",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M2",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple",
+      "weight": 10
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M2 Pro",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple_pro",
+      "weight": 7
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M2 Max",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple_pro",
+      "weight": 4
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M3",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple",
+      "weight": 8
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M3 Pro",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple_pro",
+      "weight": 6
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M3 Max",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple_pro",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M4",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple",
+      "weight": 5
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M4 Pro",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple_pro",
+      "weight": 3
+    },
+    {
+      "vendor_prefix": "Apple",
+      "model": "Apple M4 Max",
+      "device_id": null,
+      "backend": "metal",
+      "tier": "apple_pro",
+      "weight": 2
+    }
   ],
   "hardware_tiers": {
     "budget": {
-      "cores": [4, 6, 8],
-      "memory_gb": [4, 8],
-      "dpr": [1.0]
+      "cores": [
+        4,
+        6,
+        8
+      ],
+      "memory_gb": [
+        4,
+        8
+      ],
+      "dpr": [
+        1.0
+      ]
     },
     "mainstream": {
-      "cores": [6, 8, 12],
-      "memory_gb": [8, 8, 8, 4],
-      "dpr": [1.0]
+      "cores": [
+        6,
+        8,
+        12
+      ],
+      "memory_gb": [
+        8,
+        8,
+        8,
+        4
+      ],
+      "dpr": [
+        1.0
+      ]
     },
     "performance": {
-      "cores": [8, 12, 16],
-      "memory_gb": [8, 8, 8, 4],
-      "dpr": [1.0]
+      "cores": [
+        8,
+        12,
+        16
+      ],
+      "memory_gb": [
+        8,
+        8,
+        8,
+        4
+      ],
+      "dpr": [
+        1.0
+      ]
     },
     "enthusiast": {
-      "cores": [12, 16, 16],
-      "memory_gb": [8, 8, 8, 4],
-      "dpr": [1.0, 1.0, 2.0]
+      "cores": [
+        12,
+        16,
+        16
+      ],
+      "memory_gb": [
+        8,
+        8,
+        8,
+        4
+      ],
+      "dpr": [
+        1.0,
+        1.0,
+        2.0
+      ]
     },
     "apple": {
-      "cores": [8],
-      "memory_gb": [8, 8, 4],
-      "dpr": [2.0]
+      "cores": [
+        8
+      ],
+      "memory_gb": [
+        8,
+        8,
+        4
+      ],
+      "dpr": [
+        2.0
+      ]
     },
     "apple_pro": {
-      "cores": [8, 8, 12],
-      "memory_gb": [8, 8, 4],
-      "dpr": [2.0]
+      "cores": [
+        8,
+        8,
+        12
+      ],
+      "memory_gb": [
+        8,
+        8,
+        4
+      ],
+      "dpr": [
+        2.0
+      ]
     }
   },
   "screens": {
     "1.0": [
-      {"w": 1920, "h": 1080, "weight": 50},
-      {"w": 2560, "h": 1440, "weight": 20},
-      {"w": 1366, "h": 768, "weight": 10},
-      {"w": 1536, "h": 864, "weight": 8},
-      {"w": 1440, "h": 900, "weight": 5},
-      {"w": 1680, "h": 1050, "weight": 4},
-      {"w": 3840, "h": 2160, "weight": 3}
+      {
+        "w": 1920,
+        "h": 1080,
+        "weight": 50
+      },
+      {
+        "w": 2560,
+        "h": 1440,
+        "weight": 20
+      },
+      {
+        "w": 1366,
+        "h": 768,
+        "weight": 10
+      },
+      {
+        "w": 1536,
+        "h": 864,
+        "weight": 8
+      },
+      {
+        "w": 1440,
+        "h": 900,
+        "weight": 5
+      },
+      {
+        "w": 1680,
+        "h": 1050,
+        "weight": 4
+      },
+      {
+        "w": 3840,
+        "h": 2160,
+        "weight": 3
+      }
     ],
     "2.0": [
-      {"w": 1920, "h": 1080, "weight": 40},
-      {"w": 2560, "h": 1440, "weight": 30},
-      {"w": 1440, "h": 900, "weight": 20},
-      {"w": 1512, "h": 982, "weight": 10}
+      {
+        "w": 1920,
+        "h": 1080,
+        "weight": 40
+      },
+      {
+        "w": 2560,
+        "h": 1440,
+        "weight": 30
+      },
+      {
+        "w": 1440,
+        "h": 900,
+        "weight": 20
+      },
+      {
+        "w": 1512,
+        "h": 982,
+        "weight": 10
+      }
     ]
   },
   "renderer_templates": {
@@ -325,8 +882,18 @@
     "Apple": "Google Inc. (Apple)"
   },
   "platform_gpu_mapping": {
-    "Win32": ["NVIDIA", "AMD", "Intel"],
-    "MacIntel": ["Apple"],
-    "Linux x86_64": ["NVIDIA", "AMD", "Intel"]
+    "Win32": [
+      "NVIDIA",
+      "AMD",
+      "Intel"
+    ],
+    "MacIntel": [
+      "Apple"
+    ],
+    "Linux x86_64": [
+      "NVIDIA",
+      "AMD",
+      "Intel"
+    ]
   }
 }

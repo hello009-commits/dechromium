@@ -6,29 +6,6 @@ from urllib.parse import urlparse
 from dechromium._config import Config
 from dechromium.models import Profile
 
-_GL_PARAM_NAMES = {
-    "0D33": "MAX_TEXTURE_SIZE",
-    "851C": "MAX_CUBE_MAP_TEXTURE_SIZE",
-    "84E8": "MAX_RENDERBUFFER_SIZE",
-    "0D3D": "MAX_VIEWPORT_DIMS",
-    "8872": "MAX_TEXTURE_IMAGE_UNITS",
-    "8B4D": "MAX_COMBINED_TEXTURE_IMAGE_UNITS",
-    "8869": "MAX_VERTEX_ATTRIBS",
-    "8B4C": "MAX_VERTEX_TEXTURE_IMAGE_UNITS",
-    "8DFB": "MAX_VERTEX_UNIFORM_VECTORS",
-    "8DFD": "MAX_FRAGMENT_UNIFORM_VECTORS",
-    "8DFC": "MAX_VARYING_VECTORS",
-    "846E": "ALIASED_LINE_WIDTH_RANGE",
-    "846D": "ALIASED_POINT_SIZE_RANGE",
-    "0D50": "SUBPIXEL_BITS",
-    "0D52": "RED_BITS",
-    "0D53": "GREEN_BITS",
-    "0D54": "BLUE_BITS",
-    "0D55": "ALPHA_BITS",
-    "0D56": "DEPTH_BITS",
-    "0D57": "STENCIL_BITS",
-}
-
 
 def build_launch_args(profile: Profile, config: Config) -> list[str]:
     """Build Chrome command-line arguments for a profile."""
@@ -95,25 +72,35 @@ def build_launch_args(profile: Profile, config: Config) -> list[str]:
         ]
     )
 
-    # WebGL version strings (hide SwiftShader identity)
-    args.append("--aspect-webgl-version=WebGL 1.0 (OpenGL ES 3.0 Chromium)")
-    args.append("--aspect-webgl-glsl-version=WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 3.0 Chromium)")
+    # Timezone spoofing (ICU override on Windows, env var on Linux)
+    if net.timezone:
+        args.append(f"--aspect-timezone={net.timezone}")
 
+    # WebGL version strings — send inner driver portion only; C++ constructs
+    # the correct "WebGL 1.0 (...)" / "WebGL 2.0 (...)" prefix per context.
+    args.append("--aspect-webgl-version=OpenGL ES 3.0 Chromium")
+    args.append("--aspect-webgl-glsl-version=OpenGL ES GLSL ES 3.0 Chromium")
+
+    # WebGL params — hex-based format: "0D33=16384,0D3D=32767x32767,..."
+    # C++ parses hex GLenum keys directly, no name mapping needed.
     if wgl.params:
         pairs = []
         for enum_hex, val in wgl.params.items():
-            name = _GL_PARAM_NAMES.get(enum_hex.upper())
-            if name is None:
-                continue  # skip WebGL2-only params not handled by C++ switch
+            key = enum_hex.upper()
             if isinstance(val, list):
-                if name in ("MAX_VIEWPORT_DIMS",):
-                    pairs.append(f"{name}={val[0]}x{val[1]}")
-                elif name in ("ALIASED_LINE_WIDTH_RANGE", "ALIASED_POINT_SIZE_RANGE"):
-                    pairs.append(f"{name}={val[0]}-{val[1]}")
+                if len(val) == 2:
+                    # Array params: WxH for int arrays, min-max for float ranges
+                    # Use 'x' for int pairs, '-' for float ranges
+                    int_hex = key.upper()
+                    # 846D = ALIASED_POINT_SIZE_RANGE, 846E = ALIASED_LINE_WIDTH_RANGE
+                    if int_hex in ("846D", "846E"):
+                        pairs.append(f"{key}={val[0]}-{val[1]}")
+                    else:
+                        pairs.append(f"{key}={val[0]}x{val[1]}")
                 else:
-                    pairs.append(f"{name}={'x'.join(str(v) for v in val)}")
+                    pairs.append(f"{key}={'x'.join(str(v) for v in val)}")
             else:
-                pairs.append(f"{name}={val}")
+                pairs.append(f"{key}={val}")
         args.append(f"--aspect-webgl-params={','.join(pairs)}")
 
     if wgl.extensions:

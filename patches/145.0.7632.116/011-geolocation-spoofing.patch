@@ -1,7 +1,7 @@
-From 3497395b645088137b8f29e1074d1d32364d5a1c Mon Sep 17 00:00:00 2001
+From 18657116aa080a19559a4bb7b298685309b93a7a Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Sun, 1 Mar 2026 13:52:58 +0000
-Subject: [PATCH 11/12] 011-geolocation-spoofing
+Subject: [PATCH 11/13] 011-geolocation-spoofing
 
 ---
  .../renderer_host/render_process_host_impl.cc |  2 ++
@@ -11,7 +11,7 @@ Subject: [PATCH 11/12] 011-geolocation-spoofing
  4 files changed, 34 insertions(+), 2 deletions(-)
 
 diff --git a/content/browser/renderer_host/render_process_host_impl.cc b/content/browser/renderer_host/render_process_host_impl.cc
-index 74d1940830d84..34ac37b14a2a4 100644
+index d02700fd87223..88b82439a0595 100644
 --- a/content/browser/renderer_host/render_process_host_impl.cc
 +++ b/content/browser/renderer_host/render_process_host_impl.cc
 @@ -3816,6 +3816,8 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
@@ -20,11 +20,11 @@ index 74d1940830d84..34ac37b14a2a4 100644
        blink::switches::kAspectWebglGlslVersion,
 +      blink::switches::kAspectGeoLatitude,
 +      blink::switches::kAspectGeoLongitude,
+       blink::switches::kAspectTimezone,
        // Please keep these in alphabetical order. Compositor switches here
        // should also be added to
-       // chrome/browser/ash/login/chrome_restart_request.cc.
 diff --git a/third_party/blink/common/switches.cc b/third_party/blink/common/switches.cc
-index 5b2ec1adc8d4d..de267eaf72408 100644
+index fa30c565877da..89bf1ab0a047a 100644
 --- a/third_party/blink/common/switches.cc
 +++ b/third_party/blink/common/switches.cc
 @@ -185,6 +185,8 @@ const char kAspectDomrectNoiseSeed[] = "aspect-domrect-noise-seed";
@@ -33,11 +33,11 @@ index 5b2ec1adc8d4d..de267eaf72408 100644
  const char kAspectWebglGlslVersion[] = "aspect-webgl-glsl-version";
 +const char kAspectGeoLatitude[] = "aspect-geo-latitude";
 +const char kAspectGeoLongitude[] = "aspect-geo-longitude";
+ const char kAspectTimezone[] = "aspect-timezone";
  
  }  // namespace switches
- }  // namespace blink
 diff --git a/third_party/blink/public/common/switches.h b/third_party/blink/public/common/switches.h
-index 03435b0541314..12f0ae1a7da6b 100644
+index 4195d809c1b41..ebdc035d330e9 100644
 --- a/third_party/blink/public/common/switches.h
 +++ b/third_party/blink/public/common/switches.h
 @@ -87,6 +87,9 @@ BLINK_COMMON_EXPORT extern const char kAspectFontFamilies[];
@@ -47,9 +47,9 @@ index 03435b0541314..12f0ae1a7da6b 100644
 +// Geolocation:
 +BLINK_COMMON_EXPORT extern const char kAspectGeoLatitude[];
 +BLINK_COMMON_EXPORT extern const char kAspectGeoLongitude[];
+ // Timezone:
+ BLINK_COMMON_EXPORT extern const char kAspectTimezone[];
  // Proxy auth: uses raw strings "aspect-proxy-username" / "aspect-proxy-password"
- // in net/ layer (which must not depend on blink/).
- }  // namespace switches
 diff --git a/third_party/blink/renderer/core/geolocation/geolocation.cc b/third_party/blink/renderer/core/geolocation/geolocation.cc
 index 640ee17dcfecd..4e968c79c3f18 100644
 --- a/third_party/blink/renderer/core/geolocation/geolocation.cc

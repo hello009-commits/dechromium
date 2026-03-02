@@ -1,7 +1,7 @@
-From 0a9b8672012b828dacadc2d28d9eecdbe0a68d0f Mon Sep 17 00:00:00 2001
+From b64c0828c07a3c8602360bc2b5a6e6153bf6e98d Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:01:28 +0000
-Subject: [PATCH 03/12] 003-screen-display
+Subject: [PATCH 03/13] 003-screen-display
 
 Screen/display property spoofing via widget_base.cc:
 - Override screen width, height, availWidth, availHeight

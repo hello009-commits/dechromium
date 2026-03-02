@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.9.0
+
+Fingerprint audit v2 — fix timezone, WebGL, and canvas detections from BrowserScan.
+
+### Added
+
+- `--aspect-timezone` flag — ICU timezone override via `TimeZoneController` (new patch 013); works on Windows where `TZ` env var is ignored
+- WebGL `readPixels()` noise — canvas noise now covers all 4 extraction paths
+- `toBlob()` / `convertToBlob()` noise — was previously zero noise
+
+### Changed
+
+- Canvas noise: channel-order-independent algorithm (shared `ApplyCanvasNoise` function); reads `SkColorType` for correct R/G/B/A byte offsets so RGBA and BGRA produce identical noise
+- Canvas noise: removed neighbor-copy optimization (detectable pattern); edge-aware ±1/±2 noise instead of flat ±3
+- WebGL version strings: send inner driver portion only (`OpenGL ES 3.0 Chromium`); C++ constructs correct `WebGL 1.0 (...)` / `WebGL 2.0 (...)` prefix per context type
+- WebGL params: hex-based format (`0D33=16384`) replacing name-based (`MAX_TEXTURE_SIZE=16384`); all params (WebGL1 + WebGL2) now sent and intercepted at helper functions
+- Removed `WEBGL_debug_shaders` from all GPU profile extension lists (leaks SwiftShader via translated shader source)
+
+### Chromium patches
+
+- Fixup 001: add `kAspectTimezone` switch declaration, definition, propagation
+- Fixup 005: shared `ApplyCanvasNoise()` in new `aspect_canvas_noise.h/.cc`; 4 interception points (getImageData, toDataURL, toBlob, WebGL readPixels)
+- Fixup 006: context-aware version strings, hex param parsing, comprehensive interception at `GetInt/Int64/FloatArray/IntArray` helpers
+- New 013: timezone spoofing via `TimeZoneController::Init()` command-line override
+
 ## 0.8.1
 
 ### Fixed
