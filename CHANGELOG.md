@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1
+
+### Fixed
+
+- Accept-Language header: remove q-values from `--accept-lang` (Chrome adds them internally; passing them caused malformed `en;q=0.9;q=0.8` headers)
+- WebGL params: remove wrong `0x8073` → `SAMPLE_BUFFERS` mapping (0x8073 is `GL_MAX_3D_TEXTURE_SIZE`, not `GL_SAMPLE_BUFFERS`); was sending `SAMPLE_BUFFERS=2048` which is invalid
+- WebGL params: skip unrecognized WebGL2-only hex-coded params that C++ switch cannot handle
+
 ## 0.7.0
 
 Fingerprint audit — fix all critical, high and medium issues from BrowserScan analysis.
@@ -22,7 +30,7 @@ Fingerprint audit — fix all critical, high and medium issues from BrowserScan 
 - DOMRect noise: `Scale()` instead of `Offset()` for proportional perturbation
 - WebGL params format: `NAME=value` instead of `hex:value`
 - `--window-size` uses `avail_height` instead of `screen_height`
-- Accept-Language header includes q-values (`en-US,en;q=0.9`)
+- Accept-Language header uses `--accept-lang` with proper language tag list
 - `avail_height` platform-aware taskbar deduction (Win: 40/48, Mac: 25, Linux: 27/36/48)
 - SwiftShader: always enabled in headless mode (both platforms)
 - Xvfb resolution matches profile screen dimensions

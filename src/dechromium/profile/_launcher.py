@@ -27,8 +27,6 @@ _GL_PARAM_NAMES = {
     "0D55": "ALPHA_BITS",
     "0D56": "DEPTH_BITS",
     "0D57": "STENCIL_BITS",
-    "8073": "SAMPLE_BUFFERS",
-    "80A9": "SAMPLES",
 }
 
 
@@ -40,15 +38,8 @@ def build_launch_args(profile: Profile, config: Config) -> list[str]:
     wgl = profile.webgl
     data_dir = config.profiles_dir / profile.id / "chrome_data"
 
-    # Accept-Language with q-values: en-US,en;q=0.9,fr;q=0.8,...
-    _accept_lang = (
-        ",".join(
-            f"{lang};q={round(1.0 - i * 0.1, 1)}" if i > 0 else lang
-            for i, lang in enumerate(net.languages[:5])
-        )
-        if net.languages
-        else net.locale
-    )
+    # --accept-lang takes plain language tags; Chrome adds q-values internally
+    _accept_lang = ",".join(net.languages[:5]) if net.languages else net.locale
 
     args = [
         str(config.browser_bin),
@@ -111,7 +102,9 @@ def build_launch_args(profile: Profile, config: Config) -> list[str]:
     if wgl.params:
         pairs = []
         for enum_hex, val in wgl.params.items():
-            name = _GL_PARAM_NAMES.get(enum_hex.upper(), enum_hex)
+            name = _GL_PARAM_NAMES.get(enum_hex.upper())
+            if name is None:
+                continue  # skip WebGL2-only params not handled by C++ switch
             if isinstance(val, list):
                 if name in ("MAX_VIEWPORT_DIMS",):
                     pairs.append(f"{name}={val[0]}x{val[1]}")
