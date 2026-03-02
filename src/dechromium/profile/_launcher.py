@@ -33,6 +33,8 @@ def build_launch_args(profile: Profile, config: Config) -> list[str]:
         "--disable-domain-reliability",
         "--disable-background-networking",
         "--no-pings",
+        "--force-color-profile=srgb",
+        "--blink-settings=preferredColorScheme=1",
     ]
 
     if net.proxy:
@@ -140,4 +142,5 @@ def build_launch_env(profile: Profile, config: Config) -> dict[str, str]:
         posix_locale = profile.network.locale.replace("-", "_") + ".UTF-8"
         env["FONTCONFIG_FILE"] = str(fonts_conf)
         env["LANG"] = posix_locale
+        env["GTK_THEME"] = "Adwaita"
     return env

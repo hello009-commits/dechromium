@@ -1,21 +1,19 @@
-From ab9b4f7b456fb04ef506fea7022ab69a7e89d390 Mon Sep 17 00:00:00 2001
+From 95341445d6cedbef010d2c8ba71f943f9d78e2b3 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:03:11 +0000
-Subject: [PATCH 05/13] 005-canvas-fingerprint
+Subject: [PATCH 05/14] 005-canvas-fingerprint
 
 Canvas fingerprint noise via --aspect-canvas-noise-seed:
 - getImageData path: base_rendering_context_2d.cc
 - toDataURL/toBlob path: image_data_buffer.cc
 - Both use edge-pixel-flip algorithm with deterministic seed
 ---
- .../html/canvas/canvas_async_blob_creator.cc  |  1 +
- .../canvas2d/base_rendering_context_2d.cc     |  3 ++
- .../canvas2d/canvas_rendering_context_2d.cc   | 28 ++++++++++++++++++-
- .../canvas2d/canvas_rendering_context_2d.h    |  1 +
- .../offscreen_canvas_rendering_context_2d.cc  | 25 ++++++++++++++++-
- .../offscreen_canvas_rendering_context_2d.h   |  1 +
- .../platform/graphics/image_data_buffer.cc    |  3 ++
- 7 files changed, 60 insertions(+), 2 deletions(-)
+ .../renderer/core/html/canvas/canvas_async_blob_creator.cc   | 1 +
+ .../modules/canvas/canvas2d/base_rendering_context_2d.cc     | 3 +++
+ .../modules/canvas/canvas2d/canvas_rendering_context_2d.cc   | 4 +++-
+ .../offscreen_canvas_rendering_context_2d.cc                 | 5 ++++-
+ .../blink/renderer/platform/graphics/image_data_buffer.cc    | 3 +++
+ 5 files changed, 14 insertions(+), 2 deletions(-)
 
 diff --git a/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.cc b/third_party/blink/renderer/core/html/canvas/canvas_async_blob_creator.cc
 index adb616defbf32..3cd013c06cb08 100644
@@ -54,79 +52,25 @@ index de1f06bb71333..0ef6da32117f2 100644
  
    return image_data;
 diff --git a/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.cc b/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.cc
-index 8b824f2e61da4..e74b0db31bf49 100644
+index 8b824f2e61da4..70c0fc855e443 100644
 --- a/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.cc
 +++ b/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.cc
-@@ -42,7 +42,10 @@
- 
- #include "base/check.h"
- #include "base/check_op.h"
-+#include "base/command_line.h"
- #include "base/feature_list.h"
-+#include "base/strings/string_number_conversions.h"
-+#include "third_party/blink/public/common/switches.h"
- #include "base/location.h"
- #include "base/memory/scoped_refptr.h"
- #include "base/memory/values_equivalent.h"
-@@ -466,7 +469,30 @@ MemoryManagedPaintCanvas* CanvasRenderingContext2D::GetOrCreatePaintCanvas() {
+@@ -466,7 +466,9 @@ MemoryManagedPaintCanvas* CanvasRenderingContext2D::GetOrCreatePaintCanvas() {
      }
    }
  
 -  return &provider->Recorder().getRecordingCanvas();
 +  MemoryManagedPaintCanvas* canvas = &provider->Recorder().getRecordingCanvas();
 +
-+  // Aspect: apply seed-dependent sub-pixel offset to the rendering origin.
-+  // This shifts all drawing by a fraction of a pixel, producing unique
-+  // anti-aliased edges per profile without any post-readback modification.
-+  if (!aspect_subpixel_applied_) {
-+    static const uint64_t seed = []() -> uint64_t {
-+      uint64_t s = 0;
-+      const auto& cmd = *base::CommandLine::ForCurrentProcess();
-+      if (cmd.HasSwitch(blink::switches::kAspectCanvasNoiseSeed))
-+        base::StringToUint64(
-+            cmd.GetSwitchValueASCII(blink::switches::kAspectCanvasNoiseSeed),
-+            &s);
-+      return s;
-+    }();
-+    if (seed != 0) {
-+      double dx = static_cast<double>(seed & 0xFF) / 512.0;
-+      double dy = static_cast<double>((seed >> 8) & 0xFF) / 512.0;
-+      canvas->translate(static_cast<float>(dx), static_cast<float>(dy));
-+    }
-+    aspect_subpixel_applied_ = true;
-+  }
-+
 +  return canvas;
  }
  
  const MemoryManagedPaintCanvas* CanvasRenderingContext2D::GetPaintCanvas()
-diff --git a/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.h b/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.h
-index 661bd4297c4d9..e4649aa14e7be 100644
---- a/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.h
-+++ b/third_party/blink/renderer/modules/canvas/canvas2d/canvas_rendering_context_2d.h
-@@ -355,6 +355,7 @@ class MODULES_EXPORT CanvasRenderingContext2D final
-   FilterOperations filter_operations_;
-   HashMap<String, FontDescription> fonts_resolved_using_current_style_;
-   bool should_prune_local_font_cache_;
-+  bool aspect_subpixel_applied_ = false;
-   LinkedHashSet<String> font_lru_list_;
- 
-   std::unique_ptr<CanvasHibernationHandler> hibernation_handler_;
 diff --git a/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.cc b/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.cc
-index a67adb54bce8c..92186dad624f5 100644
+index a67adb54bce8c..57743068ad59d 100644
 --- a/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.cc
 +++ b/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.cc
-@@ -27,6 +27,9 @@
- #include "third_party/blink/renderer/platform/graphics/canvas_resource.h"
- #include "third_party/blink/renderer/platform/graphics/canvas_resource_provider.h"
- #include "third_party/blink/renderer/platform/graphics/gpu/shared_gpu_context.h"
-+#include "base/command_line.h"
-+#include "base/strings/string_number_conversions.h"
-+#include "third_party/blink/public/common/switches.h"
- #include "third_party/blink/renderer/platform/graphics/paint/paint_canvas.h"
- #include "third_party/blink/renderer/platform/graphics/skia/skia_utils.h"
- #include "third_party/blink/renderer/platform/graphics/static_bitmap_image.h"
-@@ -394,7 +397,27 @@ OffscreenCanvasRenderingContext2D::GetOrCreatePaintCanvas() {
+@@ -394,7 +394,10 @@ OffscreenCanvasRenderingContext2D::GetOrCreatePaintCanvas() {
        [[unlikely]] {
      return nullptr;
    }
@@ -134,39 +78,10 @@ index a67adb54bce8c..92186dad624f5 100644
 +  MemoryManagedPaintCanvas* canvas = const_cast<MemoryManagedPaintCanvas*>(
 +      static_cast<const OffscreenCanvasRenderingContext2D*>(this)
 +          ->GetPaintCanvas());
-+  if (canvas && !aspect_subpixel_applied_) {
-+    static const uint64_t seed = []() -> uint64_t {
-+      uint64_t s = 0;
-+      const auto& cmd = *base::CommandLine::ForCurrentProcess();
-+      if (cmd.HasSwitch(blink::switches::kAspectCanvasNoiseSeed))
-+        base::StringToUint64(
-+            cmd.GetSwitchValueASCII(blink::switches::kAspectCanvasNoiseSeed),
-+            &s);
-+      return s;
-+    }();
-+    if (seed != 0) {
-+      double dx = static_cast<double>(seed & 0xFF) / 512.0;
-+      double dy = static_cast<double>((seed >> 8) & 0xFF) / 512.0;
-+      canvas->translate(static_cast<float>(dx), static_cast<float>(dy));
-+    }
-+    aspect_subpixel_applied_ = true;
-+  }
 +  return canvas;
  }
  
  const MemoryManagedPaintCanvas*
-diff --git a/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.h b/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.h
-index 651709e85a5e7..20a1be19c88d0 100644
---- a/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.h
-+++ b/third_party/blink/renderer/modules/canvas/offscreencanvas2d/offscreen_canvas_rendering_context_2d.h
-@@ -149,6 +149,7 @@ class MODULES_EXPORT OffscreenCanvasRenderingContext2D final
-   SkIRect dirty_rect_for_commit_;
- 
-   bool is_valid_size_ = false;
-+  bool aspect_subpixel_applied_ = false;
- };
- 
- }  // namespace blink
 diff --git a/third_party/blink/renderer/platform/graphics/image_data_buffer.cc b/third_party/blink/renderer/platform/graphics/image_data_buffer.cc
 index c76f6553e1cec..8094c95b824fb 100644
 --- a/third_party/blink/renderer/platform/graphics/image_data_buffer.cc

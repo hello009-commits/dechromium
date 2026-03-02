@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.9.2
+
+Fingerprint audit v3 — fix BrowserLeaks detections.
+
+### Fixed
+
+- Canvas: removed sub-pixel translate (caused -10% tampering detection on BrowserScan); canvas fingerprint is already unique from font/screen/DOMRect patches
+- WebGL: fixed wrong values for `MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS` (120→212988), `MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS` (120→200704), `MAX_FRAGMENT_UNIFORM_COMPONENTS` (16384→4096)
+- WebGL: added 9 missing params (`MAX_VERTEX_UNIFORM_BLOCKS`, `MAX_FRAGMENT_UNIFORM_BLOCKS`, `MAX_COMBINED_UNIFORM_BLOCKS`, `MAX_UNIFORM_BLOCK_SIZE`, `UNIFORM_BUFFER_OFFSET_ALIGNMENT`, `MIN/MAX_PROGRAM_TEXEL_OFFSET`, `MAX_TEXTURE_LOD_BIAS`, `MAX_TEXTURE_MAX_ANISOTROPY`)
+- Speech synthesis: return empty voice list to prevent locale fingerprinting from system voices
+- Dark mode: force light theme via `--force-color-profile=srgb`, `--blink-settings=preferredColorScheme=1`, and `GTK_THEME=Adwaita`
+
+### Changed
+
+- WebGL model: `params` field now accepts `float` values (for `MAX_TEXTURE_LOD_BIAS`, `MAX_TEXTURE_MAX_ANISOTROPY`)
+
+### Chromium patches
+
+- Fixup 005: remove sub-pixel translate from canvas rendering contexts
+- Fixup 006: add float param interception in `GetFloatParameter`
+- New 014: speech synthesis voice list suppression
+
 ## 0.9.1
 
 ### Changed

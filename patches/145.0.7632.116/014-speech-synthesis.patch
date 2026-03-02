@@ -1,0 +1,33 @@
+From 07567cb977ef6afe2bab72a5712094a77c210fc4 Mon Sep 17 00:00:00 2001
+From: ENbanned <nik.skvortsov2007@gmail.com>
+Date: Mon, 2 Mar 2026 13:53:27 +0000
+Subject: [PATCH 14/14] 014-speech-synthesis
+
+Suppress speechSynthesis.getVoices() to return empty voice list,
+preventing locale fingerprinting from system voices (e.g. Russian
+voices leaking real locale). Matches Firefox resistFingerprinting.
+---
+ .../blink/renderer/modules/speech/speech_synthesis.cc       | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/third_party/blink/renderer/modules/speech/speech_synthesis.cc b/third_party/blink/renderer/modules/speech/speech_synthesis.cc
+index 2327015bc565b..597322cf87d50 100644
+--- a/third_party/blink/renderer/modules/speech/speech_synthesis.cc
++++ b/third_party/blink/renderer/modules/speech/speech_synthesis.cc
+@@ -87,11 +87,9 @@ SpeechSynthesis::SpeechSynthesis(LocalDOMWindow& window)
+ 
+ void SpeechSynthesis::OnSetVoiceList(
+     Vector<mojom::blink::SpeechSynthesisVoicePtr> mojom_voices) {
++  // Aspect: suppress real system voices to prevent locale fingerprinting.
++  // Returns empty voice list (matches Firefox resistFingerprinting behavior).
+   voice_list_.clear();
+-  for (auto& mojom_voice : mojom_voices) {
+-    voice_list_.push_back(
+-        MakeGarbageCollected<SpeechSynthesisVoice>(std::move(mojom_voice)));
+-  }
+   VoicesDidChange();
+ }
+ 
+-- 
+2.39.5
+

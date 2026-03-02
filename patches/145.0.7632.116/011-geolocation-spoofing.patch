@@ -1,7 +1,7 @@
-From ea69c0e4a4badb983470ebb03a8ac03943e4d47c Mon Sep 17 00:00:00 2001
+From 671c018163757e3478fe3fa404ac74c2d24be1e7 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Sun, 1 Mar 2026 13:52:58 +0000
-Subject: [PATCH 11/13] 011-geolocation-spoofing
+Subject: [PATCH 11/14] 011-geolocation-spoofing
 
 ---
  .../renderer_host/render_process_host_impl.cc |  2 ++

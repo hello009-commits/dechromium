@@ -1,7 +1,7 @@
-From 8fbddad88985f56b12944be2fe47fe9127bb19b9 Mon Sep 17 00:00:00 2001
+From 65b6a742c6919d9752ad6c6457cf8168462e25a2 Mon Sep 17 00:00:00 2001
 From: ENbanned <nik.skvortsov2007@gmail.com>
 Date: Fri, 27 Feb 2026 21:19:31 +0000
-Subject: [PATCH 06/13] 006-webgl-fingerprint
+Subject: [PATCH 06/14] 006-webgl-fingerprint
 
 Expanded WebGL fingerprint spoofing:
 - getParameter: 22 hardware params via --aspect-webgl-params (key=value CSV)
@@ -11,8 +11,8 @@ Expanded WebGL fingerprint spoofing:
   --aspect-webgl-precision-high/medium (rangeMin,rangeMax,precision)
 ---
  .../webgl/webgl2_rendering_context_base.cc    |  21 +-
- .../webgl/webgl_rendering_context_base.cc     | 198 +++++++++++++++++-
- 2 files changed, 217 insertions(+), 2 deletions(-)
+ .../webgl/webgl_rendering_context_base.cc     | 207 +++++++++++++++++-
+ 2 files changed, 226 insertions(+), 2 deletions(-)
 
 diff --git a/third_party/blink/renderer/modules/webgl/webgl2_rendering_context_base.cc b/third_party/blink/renderer/modules/webgl/webgl2_rendering_context_base.cc
 index 132e1b3724f9d..80ef719c24d41 100644
@@ -69,7 +69,7 @@ index 132e1b3724f9d..80ef719c24d41 100644
      case GL_COPY_READ_BUFFER_BINDING:
        return WebGLAny(script_state, bound_copy_read_buffer_.Get());
 diff --git a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc b/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
-index 72a80ba576711..0c135dc8bc55a 100644
+index 72a80ba576711..d8f7d340735ea 100644
 --- a/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
 +++ b/third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.cc
 @@ -26,6 +26,7 @@
@@ -299,7 +299,23 @@ index 72a80ba576711..0c135dc8bc55a 100644
  }
  
  void WebGLRenderingContextBase::RenderbufferStorageImpl(
-@@ -7670,6 +7818,15 @@ ScriptValue WebGLRenderingContextBase::GetFloatParameter(
+@@ -7660,6 +7808,15 @@ ScriptValue WebGLRenderingContextBase::GetBooleanArrayParameter(
+ ScriptValue WebGLRenderingContextBase::GetFloatParameter(
+     ScriptState* script_state,
+     GLenum pname) {
++  // Aspect: check spoofed param map first.
++  const auto& params = GetAspectWebglParams();
++  auto it = params.find(pname);
++  if (it != params.end()) {
++    double v = 0;
++    if (base::StringToDouble(it->second, &v))
++      return WebGLAny(script_state, static_cast<float>(v));
++  }
++
+   GLfloat value = 0;
+   if (!isContextLost()) {
+     ContextGL()->GetFloatv(pname, &value);
+@@ -7670,6 +7827,15 @@ ScriptValue WebGLRenderingContextBase::GetFloatParameter(
  ScriptValue WebGLRenderingContextBase::GetIntParameter(
      ScriptState* script_state,
      GLenum pname) {
@@ -315,7 +331,7 @@ index 72a80ba576711..0c135dc8bc55a 100644
    GLint value = 0;
    if (!isContextLost()) {
      ContextGL()->GetIntegerv(pname, &value);
-@@ -7692,6 +7849,15 @@ ScriptValue WebGLRenderingContextBase::GetIntParameter(
+@@ -7692,6 +7858,15 @@ ScriptValue WebGLRenderingContextBase::GetIntParameter(
  ScriptValue WebGLRenderingContextBase::GetInt64Parameter(
      ScriptState* script_state,
      GLenum pname) {
@@ -331,7 +347,7 @@ index 72a80ba576711..0c135dc8bc55a 100644
    GLint64 value = 0;
    if (!isContextLost())
      ContextGL()->GetInteger64v(pname, &value);
-@@ -7710,6 +7876,21 @@ ScriptValue WebGLRenderingContextBase::GetUnsignedIntParameter(
+@@ -7710,6 +7885,21 @@ ScriptValue WebGLRenderingContextBase::GetUnsignedIntParameter(
  ScriptValue WebGLRenderingContextBase::GetWebGLFloatArrayParameter(
      ScriptState* script_state,
      GLenum pname) {
@@ -353,7 +369,7 @@ index 72a80ba576711..0c135dc8bc55a 100644
    std::array<GLfloat, 4> value = {0};
    if (!isContextLost())
      ContextGL()->GetFloatv(pname, value.data());
-@@ -7734,6 +7915,21 @@ ScriptValue WebGLRenderingContextBase::GetWebGLFloatArrayParameter(
+@@ -7734,6 +7924,21 @@ ScriptValue WebGLRenderingContextBase::GetWebGLFloatArrayParameter(
  ScriptValue WebGLRenderingContextBase::GetWebGLIntArrayParameter(
      ScriptState* script_state,
      GLenum pname) {
