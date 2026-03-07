@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.5
+
+### Fixed
+
+- Browser: clean stale Chrome `SingletonLock` files on start and stop — prevents exit code 21 after dirty kills (SIGKILL, crash, `pkill`)
+
 ## 0.9.4
 
 ### Fixed
