@@ -7,7 +7,7 @@ from dechromium._config import Config
 from dechromium.models import Profile
 
 
-def build_launch_args(profile: Profile, config: Config) -> list[str]:
+def build_launch_args(profile: Profile, config: Config, *, headless: bool = True) -> list[str]:
     """Build Chrome command-line arguments for a profile."""
     net = profile.network
     hw = profile.hardware
@@ -24,7 +24,6 @@ def build_launch_args(profile: Profile, config: Config) -> list[str]:
         f"--user-agent={ident.user_agent}",
         f"--lang={net.locale}",
         f"--accept-lang={_accept_lang}",
-        f"--window-size={hw.avail_width},{hw.avail_height}",
         "--no-first-run",
         "--no-default-browser-check",
         "--disable-blink-features=AutomationControlled",
@@ -36,6 +35,11 @@ def build_launch_args(profile: Profile, config: Config) -> list[str]:
         "--force-color-profile=srgb",
         "--blink-settings=preferredColorScheme=1",
     ]
+
+    # In headless mode, force window to match spoofed screen (virtual display).
+    # In headed mode, let Chrome auto-size to the real monitor.
+    if headless:
+        args.append(f"--window-size={hw.avail_width},{hw.avail_height}")
 
     if net.proxy:
         args.append(f"--proxy-server={net.proxy}")

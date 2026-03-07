@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0
+
+### Changed
+
+- Headed mode: `--window-size` is no longer forced to match spoofed screen dimensions when `headless=False` — Chrome auto-sizes to the real monitor, fixing oversized windows and broken popups on smaller displays
+- `build_launch_args()` now accepts `headless` keyword argument
+
 ## 0.11.3
 
 ### Fixed

@@ -234,7 +234,7 @@ class Dechromium:
     ) -> BrowserInfo:
         profile = self._manager.get(profile_id)
         resolved = _resolve_network(profile, self.config.data_dir)
-        args = build_launch_args(resolved, self.config)
+        args = build_launch_args(resolved, self.config, headless=headless)
         env = build_launch_env(resolved, self.config)
         res = f"{profile.hardware.screen_width}x{profile.hardware.screen_height}x24"
         return self._pool.start(
