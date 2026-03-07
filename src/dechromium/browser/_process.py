@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import subprocess
 import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 
 from dechromium._exceptions import BrowserError, BrowserNotInstalledError, BrowserTimeoutError
+
+logger = logging.getLogger(__name__)
+
+_SINGLETON_FILES = ("SingletonLock", "SingletonCookie", "SingletonSocket")
 
 
 @dataclass(slots=True)
@@ -45,6 +51,8 @@ class BrowserProcess:
             "--remote-allow-origins=*",
             "--no-sandbox",
         ]
+
+        self._clean_singleton_locks()
 
         popen_kwargs: dict = {
             "env": {**os.environ, **self.env},
@@ -87,6 +95,7 @@ class BrowserProcess:
         if self._proc.poll() is not None:
             self._proc = None
             self._info = None
+            self._clean_singleton_locks()
             return
         self._proc.terminate()
         try:
@@ -96,6 +105,7 @@ class BrowserProcess:
             self._proc.wait(timeout=3)
         self._proc = None
         self._info = None
+        self._clean_singleton_locks()
 
     @property
     def is_running(self) -> bool:
@@ -106,6 +116,25 @@ class BrowserProcess:
         if self.is_running:
             return self._info
         return None
+
+    def _user_data_dir(self) -> Path | None:
+        for arg in self.args:
+            if arg.startswith("--user-data-dir="):
+                return Path(arg.split("=", 1)[1])
+        return None
+
+    def _clean_singleton_locks(self):
+        data_dir = self._user_data_dir()
+        if not data_dir or not data_dir.exists():
+            return
+        for name in _SINGLETON_FILES:
+            lock = data_dir / name
+            if lock.exists() or lock.is_symlink():
+                try:
+                    lock.unlink()
+                    logger.debug("Removed stale %s from %s", name, data_dir)
+                except OSError:
+                    pass
 
     def _wait_cdp(self, cdp_url: str, timeout: float) -> str:
         deadline = time.monotonic() + timeout
